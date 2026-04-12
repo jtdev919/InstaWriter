@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InstaWriter.Api.Tests/InstaWriter.Api.Tests.csproj" />
+    <Project Path="src/InstaWriter.Api/InstaWriter.Api.csproj" />
+    <Project Path="src/InstaWriter.Core/InstaWriter.Core.csproj" />
+    <Project Path="src/InstaWriter.Infrastructure/InstaWriter.Infrastructure.csproj" />
+  </Folder>
+</Solution>
