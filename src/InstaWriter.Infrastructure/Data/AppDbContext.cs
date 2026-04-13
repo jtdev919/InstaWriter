@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<PublishJob> PublishJobs => Set<PublishJob>();
     public DbSet<TaskItem> TaskItems => Set<TaskItem>();
     public DbSet<ChannelAccount> ChannelAccounts => Set<ChannelAccount>();
+    public DbSet<Asset> Assets => Set<Asset>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

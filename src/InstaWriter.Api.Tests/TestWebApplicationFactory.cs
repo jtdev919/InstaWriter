@@ -49,6 +49,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             if (generatorDescriptor != null) services.Remove(generatorDescriptor);
             services.AddSingleton<IContentGenerator>(new FakeContentGenerator());
 
+            // Replace blob storage with fake
+            var blobDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IBlobStorageService));
+            if (blobDescriptor != null) services.Remove(blobDescriptor);
+            services.AddSingleton<IBlobStorageService>(new FakeBlobStorageService());
+
             // Ensure the schema is created
             var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();
