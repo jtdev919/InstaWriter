@@ -72,6 +72,12 @@ app.MapContentGenerationEndpoints();
 app.MapAssetEndpoints();
 app.MapBrandProfileEndpoints();
 app.MapContentBriefEndpoints();
+app.MapApprovalEndpoints();
+app.MapCalendarEventEndpoints();
+app.MapWorkflowEventEndpoints();
+app.MapInsightSnapshotEndpoints();
+app.MapCampaignEndpoints();
+app.MapContentPillarEndpoints();
 
 app.Run();
 

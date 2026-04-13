@@ -15,6 +15,12 @@ public class AppDbContext : DbContext
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<BrandProfile> BrandProfiles => Set<BrandProfile>();
     public DbSet<ContentBrief> ContentBriefs => Set<ContentBrief>();
+    public DbSet<Approval> Approvals => Set<Approval>();
+    public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
+    public DbSet<WorkflowEvent> WorkflowEvents => Set<WorkflowEvent>();
+    public DbSet<InsightSnapshot> InsightSnapshots => Set<InsightSnapshot>();
+    public DbSet<Campaign> Campaigns => Set<Campaign>();
+    public DbSet<ContentPillar> ContentPillars => Set<ContentPillar>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
