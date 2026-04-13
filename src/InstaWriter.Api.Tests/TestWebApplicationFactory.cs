@@ -54,6 +54,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             if (blobDescriptor != null) services.Remove(blobDescriptor);
             services.AddSingleton<IBlobStorageService>(new FakeBlobStorageService());
 
+            // Replace token refresh with fake
+            var tokenRefreshDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ITokenRefreshService));
+            if (tokenRefreshDescriptor != null) services.Remove(tokenRefreshDescriptor);
+            services.AddSingleton<ITokenRefreshService>(new FakeTokenRefreshService());
+
+            // Remove background services for tests
+            var hostedServices = services.Where(d => d.ServiceType == typeof(Microsoft.Extensions.Hosting.IHostedService)).ToList();
+            foreach (var hs in hostedServices) services.Remove(hs);
+
             // Ensure the schema is created
             var sp = services.BuildServiceProvider();
             using var scope = sp.CreateScope();

@@ -15,6 +15,21 @@ public interface IInstagramPublisher
         string videoUrl,
         string caption,
         CancellationToken ct = default);
+
+    Task<PublishResult> PublishCarouselAsync(
+        string accessToken,
+        string igUserId,
+        IReadOnlyList<CarouselItem> items,
+        string caption,
+        CancellationToken ct = default);
+}
+
+public record CarouselItem(string MediaUrl, CarouselItemType ItemType);
+
+public enum CarouselItemType
+{
+    Image,
+    Video
 }
 
 public record PublishResult(

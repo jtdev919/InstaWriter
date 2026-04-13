@@ -33,6 +33,122 @@ public class InstagramPublisher(HttpClient httpClient, ILogger<InstagramPublishe
         }, ct);
     }
 
+    public async Task<PublishResult> PublishCarouselAsync(
+        string accessToken, string igUserId, IReadOnlyList<CarouselItem> items, string caption, CancellationToken ct = default)
+    {
+        if (items.Count < 2 || items.Count > 10)
+            return new PublishResult(false, null, null, "Carousel requires between 2 and 10 items.");
+
+        try
+        {
+            // Step 1: Create individual item containers
+            var childIds = new List<string>();
+
+            foreach (var item in items)
+            {
+                logger.LogInformation("Creating carousel item container ({Type})", item.ItemType);
+
+                var containerParams = new Dictionary<string, string>
+                {
+                    ["is_carousel_item"] = "true",
+                    ["access_token"] = accessToken
+                };
+
+                if (item.ItemType == CarouselItemType.Video)
+                {
+                    containerParams["video_url"] = item.MediaUrl;
+                    containerParams["media_type"] = "VIDEO";
+                }
+                else
+                {
+                    containerParams["image_url"] = item.MediaUrl;
+                }
+
+                var response = await httpClient.PostAsync(
+                    $"{GraphApiBase}/{igUserId}/media",
+                    new FormUrlEncodedContent(containerParams),
+                    ct);
+
+                var body = await response.Content.ReadFromJsonAsync<GraphApiResponse>(ct);
+
+                if (!response.IsSuccessStatusCode || body?.Id is null)
+                {
+                    var error = body?.Error?.Message ?? $"Carousel item container creation failed with status {response.StatusCode}";
+                    logger.LogError("Carousel item container failed: {Error}", error);
+                    return new PublishResult(false, null, null, error);
+                }
+
+                // Wait for video items to finish processing
+                if (item.ItemType == CarouselItemType.Video)
+                {
+                    var ready = await WaitForContainerReady(accessToken, body.Id, ct);
+                    if (!ready)
+                        return new PublishResult(false, body.Id, null, $"Carousel video item {body.Id} did not become ready within timeout");
+                }
+
+                childIds.Add(body.Id);
+                logger.LogInformation("Carousel item container created: {ContainerId}", body.Id);
+            }
+
+            // Step 2: Create carousel container referencing all children
+            logger.LogInformation("Creating carousel container with {Count} items", childIds.Count);
+
+            var carouselParams = new Dictionary<string, string>
+            {
+                ["media_type"] = "CAROUSEL",
+                ["caption"] = caption,
+                ["children"] = string.Join(",", childIds),
+                ["access_token"] = accessToken
+            };
+
+            var carouselResponse = await httpClient.PostAsync(
+                $"{GraphApiBase}/{igUserId}/media",
+                new FormUrlEncodedContent(carouselParams),
+                ct);
+
+            var carouselBody = await carouselResponse.Content.ReadFromJsonAsync<GraphApiResponse>(ct);
+
+            if (!carouselResponse.IsSuccessStatusCode || carouselBody?.Id is null)
+            {
+                var error = carouselBody?.Error?.Message ?? $"Carousel container creation failed with status {carouselResponse.StatusCode}";
+                logger.LogError("Carousel container creation failed: {Error}", error);
+                return new PublishResult(false, null, null, error);
+            }
+
+            var carouselContainerId = carouselBody.Id;
+            logger.LogInformation("Carousel container created: {ContainerId}", carouselContainerId);
+
+            // Step 3: Publish the carousel
+            logger.LogInformation("Publishing carousel {ContainerId}", carouselContainerId);
+
+            var publishResponse = await httpClient.PostAsync(
+                $"{GraphApiBase}/{igUserId}/media_publish",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["creation_id"] = carouselContainerId,
+                    ["access_token"] = accessToken
+                }),
+                ct);
+
+            var publishBody = await publishResponse.Content.ReadFromJsonAsync<GraphApiResponse>(ct);
+
+            if (!publishResponse.IsSuccessStatusCode || publishBody?.Id is null)
+            {
+                var error = publishBody?.Error?.Message ?? $"Carousel publish failed with status {publishResponse.StatusCode}";
+                logger.LogError("Carousel publish failed: {Error}", error);
+                return new PublishResult(false, carouselContainerId, null, error);
+            }
+
+            logger.LogInformation("Carousel published successfully. Media ID: {MediaId}", publishBody.Id);
+            return new PublishResult(true, carouselContainerId, publishBody.Id, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Instagram carousel publish failed");
+            return new PublishResult(false, null, null, ex.Message);
+        }
+    }
+
     private async Task<PublishResult> PublishMediaAsync(
         string accessToken, string igUserId, Dictionary<string, string> containerParams, CancellationToken ct)
     {

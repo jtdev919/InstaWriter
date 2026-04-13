@@ -23,4 +23,12 @@ public class FakeInstagramPublisher : IInstagramPublisher
             ? new PublishResult(true, FakeContainerId, FakeMediaId, null)
             : new PublishResult(false, FakeContainerId, null, "Fake publish error"));
     }
+
+    public Task<PublishResult> PublishCarouselAsync(
+        string accessToken, string igUserId, IReadOnlyList<CarouselItem> items, string caption, CancellationToken ct = default)
+    {
+        return Task.FromResult(ShouldSucceed
+            ? new PublishResult(true, FakeContainerId, FakeMediaId, null)
+            : new PublishResult(false, FakeContainerId, null, "Fake carousel publish error"));
+    }
 }

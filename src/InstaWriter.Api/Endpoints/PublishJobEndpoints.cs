@@ -86,8 +86,8 @@ public static class PublishJobEndpoints
             if (string.IsNullOrEmpty(account.ExternalAccountId))
                 return Results.BadRequest(new { Error = "Channel account missing ExternalAccountId (Instagram User ID)." });
 
-            if (string.IsNullOrEmpty(request.ImageUrl) && string.IsNullOrEmpty(request.VideoUrl))
-                return Results.BadRequest(new { Error = "Either imageUrl or videoUrl is required." });
+            if (string.IsNullOrEmpty(request.ImageUrl) && string.IsNullOrEmpty(request.VideoUrl) && (request.CarouselItems is null || request.CarouselItems.Count == 0))
+                return Results.BadRequest(new { Error = "Either imageUrl, videoUrl, or carouselItems is required." });
 
             // Transition to Publishing
             job.Status = PublishJobStatus.Publishing;
@@ -97,7 +97,9 @@ public static class PublishJobEndpoints
             var caption = job.ContentDraft?.Caption ?? "";
             PublishResult result;
 
-            if (!string.IsNullOrEmpty(request.VideoUrl))
+            if (request.CarouselItems is { Count: >= 2 })
+                result = await publisher.PublishCarouselAsync(account.AccessToken, account.ExternalAccountId, request.CarouselItems, caption);
+            else if (!string.IsNullOrEmpty(request.VideoUrl))
                 result = await publisher.PublishReelAsync(account.AccessToken, account.ExternalAccountId, request.VideoUrl, caption);
             else
                 result = await publisher.PublishSingleImageAsync(account.AccessToken, account.ExternalAccountId, request.ImageUrl!, caption);
@@ -158,5 +160,5 @@ public static class PublishJobEndpoints
         return group;
     }
 
-    public record ExecutePublishRequest(string? ImageUrl, string? VideoUrl);
+    public record ExecutePublishRequest(string? ImageUrl, string? VideoUrl, List<CarouselItem>? CarouselItems);
 }
