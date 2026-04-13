@@ -9,7 +9,7 @@ AI-powered content operations platform for Instagram marketing. Automates conten
 - **Database**: Azure SQL
 - **Storage**: Azure Blob Storage
 - **Messaging**: Azure Service Bus
-- **AI**: Azure OpenAI
+- **AI**: Azure AI Foundry + Azure OpenAI (GPT-4o via Azure.AI.OpenAI SDK)
 - **Secrets**: Azure Key Vault
 - **Telemetry**: Application Insights
 - **External APIs**: Instagram Graph API / Instagram Platform (professional accounts only)
@@ -28,17 +28,29 @@ src/
       ContentDraftEndpoints.cs
       PublishJobEndpoints.cs
       TaskItemEndpoints.cs
+      ChannelAccountEndpoints.cs
+      ContentGenerationEndpoints.cs
   InstaWriter.Core/              # Domain models, enums, shared logic
     Entities/
       ContentIdea.cs
       ContentDraft.cs
       PublishJob.cs
       TaskItem.cs
-  InstaWriter.Infrastructure/    # EF Core, DbContext, data access
+      ChannelAccount.cs
+    Services/
+      IInstagramPublisher.cs     # Interface for Instagram publishing
+      IContentGenerator.cs       # Interface for AI content generation
+    Workflow/
+      StatusTransitions.cs       # State machine for all entity status changes
+  InstaWriter.Infrastructure/    # EF Core, DbContext, data access, external APIs
     Data/
       AppDbContext.cs
       DesignTimeDbContextFactory.cs
       Configurations/
+    Instagram/
+      InstagramPublisher.cs      # Instagram Graph API client
+    AI/
+      AzureOpenAIContentGenerator.cs  # Azure OpenAI content generation
   InstaWriter.Api.Tests/         # Integration tests (xUnit v3 + WebApplicationFactory)
 ```
 
@@ -71,8 +83,11 @@ dotnet ef database update --project src/InstaWriter.Infrastructure --startup-pro
 - Health check: GET /api/health
 - Content ideas: GET, POST /api/content/ideas | GET, PUT, DELETE /api/content/ideas/{id}
 - Content drafts: GET, POST /api/content/drafts | GET, PUT, DELETE /api/content/drafts/{id}
-- Publish jobs: GET, POST /api/publish/jobs | GET, DELETE /api/publish/jobs/{id} | GET /api/publish/jobs/{id}/status
+- Publish jobs: GET, POST /api/publish/jobs | GET, DELETE /api/publish/jobs/{id} | GET /api/publish/jobs/{id}/status | POST /api/publish/jobs/{id}/execute
 - Tasks: GET, POST /api/tasks | GET, PUT, DELETE /api/tasks/{id} | POST /api/tasks/{id}/complete
+- Channel accounts: GET, POST /api/channels | GET, DELETE /api/channels/{id} | PUT /api/channels/{id}/token
+- AI generation: POST /api/content/drafts/generate | POST /api/content/drafts/{id}/regenerate-caption | POST /api/content/drafts/{id}/score-compliance
+- Transitions: POST /api/{entity}/{id}/transition (all entities support workflow state transitions)
 
 ## Key concepts
 

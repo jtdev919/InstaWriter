@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace InstaWriter.Core.Entities;
 
 public class ContentIdea
@@ -13,6 +15,7 @@ public class ContentIdea
     public DateTime? PlannedPublishDate { get; set; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ContentRiskLevel
 {
     Low,
@@ -20,6 +23,7 @@ public enum ContentRiskLevel
     High
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ContentIdeaStatus
 {
     Captured,

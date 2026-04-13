@@ -13,7 +13,6 @@ public class PublishJobConfiguration : IEntityTypeConfiguration<PublishJob>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
-        builder.Property(x => x.ChannelAccountId).HasMaxLength(100);
         builder.Property(x => x.ExternalContainerId).HasMaxLength(200);
         builder.Property(x => x.ExternalMediaId).HasMaxLength(200);
         builder.Property(x => x.FailureReason).HasMaxLength(2000);
@@ -32,5 +31,10 @@ public class PublishJobConfiguration : IEntityTypeConfiguration<PublishJob>
             .WithMany()
             .HasForeignKey(x => x.ContentDraftId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.ChannelAccount)
+            .WithMany()
+            .HasForeignKey(x => x.ChannelAccountId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

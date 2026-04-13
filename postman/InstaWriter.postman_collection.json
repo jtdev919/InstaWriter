@@ -1,0 +1,628 @@
+{
+  "info": {
+    "name": "InstaWriter API",
+    "description": "Social Content Orchestration Platform - Full API collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://localhost:7201" },
+    { "key": "ideaId", "value": "" },
+    { "key": "draftId", "value": "" },
+    { "key": "publishJobId", "value": "" },
+    { "key": "taskId", "value": "" },
+    { "key": "channelId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Content Ideas",
+      "item": [
+        {
+          "name": "Create Idea",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('ideaId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/ideas",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"3 reasons your HRV may be low this week\",\n  \"summary\": \"Educational carousel about HRV factors like sleep, stress, and alcohol\",\n  \"pillarName\": \"Data-to-insight education\",\n  \"riskLevel\": \"Medium\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Ideas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/content/ideas"
+          }
+        },
+        {
+          "name": "Get Idea by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}"
+          }
+        },
+        {
+          "name": "Update Idea",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"3 reasons your HRV may be low this week\",\n  \"summary\": \"Updated summary with more detail on sleep and stress\",\n  \"pillarName\": \"Data-to-insight education\",\n  \"riskLevel\": \"Medium\",\n  \"plannedPublishDate\": \"2026-04-18T09:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transition Idea (Captured → Planned)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Planned\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transition Idea (Planned → InProgress)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"InProgress\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Idea",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Content Generation",
+      "item": [
+        {
+          "name": "Generate Draft from Idea (Carousel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('draftId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentIdeaId\": \"{{ideaId}}\",\n  \"targetFormat\": \"carousel\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Generate Draft from Idea (Reel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('draftId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentIdeaId\": \"{{ideaId}}\",\n  \"targetFormat\": \"reel\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Regenerate Caption (shorter)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/regenerate-caption",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"direction\": \"shorter and more punchy\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Regenerate Caption (add CTA)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/regenerate-caption",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"direction\": \"add a stronger call to action for beta signups\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Score Compliance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/score-compliance"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Content Drafts",
+      "item": [
+        {
+          "name": "Create Draft (manual)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('draftId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentIdeaId\": \"{{ideaId}}\",\n  \"caption\": \"Your HRV tells a story. Here are 3 things that may be dragging it down \\n\\n1. Poor sleep quality\\n2. Chronic stress\\n3. Alcohol consumption\\n\\nWhich one resonates most? Drop a comment 👇\",\n  \"hashtagSet\": \"#hrv #heartratevariability #healthdata #biohacking #wellness #fitness\",\n  \"coverText\": \"Why Is Your HRV Low?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Drafts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/content/drafts"
+          }
+        },
+        {
+          "name": "Get Draft by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}"
+          }
+        },
+        {
+          "name": "Update Draft",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"caption\": \"Updated caption with better hook\",\n  \"hashtagSet\": \"#hrv #wellness #fitness #healthtech\",\n  \"coverText\": \"3 HRV Killers\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transition Draft (Draft → AwaitingReview)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"AwaitingReview\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transition Draft (AwaitingReview → Approved)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Approved\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transition Draft (AwaitingReview → Rejected)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Rejected\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Draft",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Channel Accounts",
+      "item": [
+        {
+          "name": "Create Channel Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('channelId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/channels",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountName\": \"my_ig_business\",\n  \"externalAccountId\": \"YOUR_IG_USER_ID\",\n  \"accessToken\": \"YOUR_ACCESS_TOKEN\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Channels",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/channels"
+          }
+        },
+        {
+          "name": "Get Channel by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/channels/{{channelId}}"
+          }
+        },
+        {
+          "name": "Update Channel Token",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/channels/{{channelId}}/token",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"NEW_ACCESS_TOKEN\",\n  \"tokenExpiry\": \"2026-06-12T00:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Channel",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/channels/{{channelId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Publish Jobs",
+      "item": [
+        {
+          "name": "Create Publish Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishJobId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/publish/jobs",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentDraftId\": \"{{draftId}}\",\n  \"channelAccountId\": \"{{channelId}}\",\n  \"plannedPublishDate\": \"2026-04-18T09:00:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Publish Jobs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/publish/jobs"
+          }
+        },
+        {
+          "name": "Get Publish Job by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/publish/jobs/{{publishJobId}}"
+          }
+        },
+        {
+          "name": "Get Publish Job Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/publish/jobs/{{publishJobId}}/status"
+          }
+        },
+        {
+          "name": "Transition Job (Pending → Scheduled)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/publish/jobs/{{publishJobId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Scheduled\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Execute Publish Job (Image)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/publish/jobs/{{publishJobId}}/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrl\": \"https://example.com/your-image.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Execute Publish Job (Reel)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/publish/jobs/{{publishJobId}}/execute",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"videoUrl\": \"https://example.com/your-reel.mp4\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Publish Job",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/publish/jobs/{{publishJobId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('taskId', json.id);",
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tasks",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"owner\": \"Joe\",\n  \"taskType\": \"RecordReel\",\n  \"description\": \"Record founder Reel: Why I'm building this health app\",\n  \"priority\": \"High\",\n  \"dueDate\": \"2026-04-15T07:30:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tasks"
+          }
+        },
+        {
+          "name": "Get Task by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"owner\": \"Joe\",\n  \"taskType\": \"RecordReel\",\n  \"description\": \"Updated: Record 60-second founder Reel instead\",\n  \"priority\": \"Urgent\",\n  \"dueDate\": \"2026-04-14T07:30:00Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Transition Task (Pending → InProgress)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"InProgress\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Complete Task",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}/complete"
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/tasks/{{taskId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "E2E: Idea → Draft → Publish",
+      "description": "Run these in order to test the full content lifecycle",
+      "item": [
+        {
+          "name": "1. Create Idea",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('ideaId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/ideas",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Why I'm building this health app\",\n  \"summary\": \"Founder journey Reel about motivation and vision\",\n  \"pillarName\": \"Founder journey\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2. AI Generate Draft",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('draftId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentIdeaId\": \"{{ideaId}}\",\n  \"targetFormat\": \"reel\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3. Score Compliance",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/score-compliance"
+          }
+        },
+        {
+          "name": "4. Transition Idea → Planned",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"status\": \"Planned\"}" }
+          }
+        },
+        {
+          "name": "5. Transition Draft → AwaitingReview",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"status\": \"AwaitingReview\"}" }
+          }
+        },
+        {
+          "name": "6. Transition Draft → Approved",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/drafts/{{draftId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"status\": \"Approved\"}" }
+          }
+        },
+        {
+          "name": "7. Transition Idea → InProgress",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/content/ideas/{{ideaId}}/transition",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"status\": \"InProgress\"}" }
+          }
+        }
+      ]
+    }
+  ]
+}

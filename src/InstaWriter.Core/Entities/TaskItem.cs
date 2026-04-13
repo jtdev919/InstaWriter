@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace InstaWriter.Core.Entities;
 
 public class TaskItem
@@ -14,6 +16,7 @@ public class TaskItem
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TaskPriority
 {
     Low,
@@ -22,6 +25,7 @@ public enum TaskPriority
     Urgent
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TaskItemStatus
 {
     Pending,

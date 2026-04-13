@@ -1,3 +1,5 @@
+using InstaWriter.Api.Tests.Fakes;
+using InstaWriter.Core.Services;
 using InstaWriter.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -36,6 +38,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // Add SQLite in-memory for tests
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlite(_connection));
+
+            // Replace Instagram publisher with fake
+            var publisherDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IInstagramPublisher));
+            if (publisherDescriptor != null) services.Remove(publisherDescriptor);
+            services.AddSingleton<IInstagramPublisher>(new FakeInstagramPublisher());
+
+            // Replace content generator with fake
+            var generatorDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IContentGenerator));
+            if (generatorDescriptor != null) services.Remove(generatorDescriptor);
+            services.AddSingleton<IContentGenerator>(new FakeContentGenerator());
 
             // Ensure the schema is created
             var sp = services.BuildServiceProvider();

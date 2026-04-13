@@ -1,4 +1,5 @@
 using InstaWriter.Core.Entities;
+using InstaWriter.Core.Services;
 using InstaWriter.Core.Workflow;
 using InstaWriter.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -61,6 +62,69 @@ public static class PublishJobEndpoints
             return Results.Ok(job);
         }).WithName("TransitionPublishJob");
 
+        group.MapPost("/{id:guid}/execute", async (Guid id, ExecutePublishRequest request, AppDbContext db, IInstagramPublisher publisher) =>
+        {
+            var job = await db.PublishJobs
+                .Include(j => j.ContentDraft)
+                .Include(j => j.ChannelAccount)
+                .FirstOrDefaultAsync(j => j.Id == id);
+
+            if (job is null) return Results.NotFound();
+
+            // Must be in Scheduled state to execute
+            if (job.Status != PublishJobStatus.Scheduled)
+                return Results.BadRequest(new { Error = $"Job must be in 'Scheduled' status to execute. Current: '{job.Status}'." });
+
+            // Need a connected channel account
+            var account = job.ChannelAccount;
+            if (account is null || account.AuthStatus != AuthStatus.Connected || string.IsNullOrEmpty(account.AccessToken))
+                return Results.BadRequest(new { Error = "No connected channel account with valid token." });
+
+            if (string.IsNullOrEmpty(account.ExternalAccountId))
+                return Results.BadRequest(new { Error = "Channel account missing ExternalAccountId (Instagram User ID)." });
+
+            if (string.IsNullOrEmpty(request.ImageUrl) && string.IsNullOrEmpty(request.VideoUrl))
+                return Results.BadRequest(new { Error = "Either imageUrl or videoUrl is required." });
+
+            // Transition to Publishing
+            job.Status = PublishJobStatus.Publishing;
+            await db.SaveChangesAsync();
+
+            // Execute the publish
+            var caption = job.ContentDraft?.Caption ?? "";
+            PublishResult result;
+
+            if (!string.IsNullOrEmpty(request.VideoUrl))
+                result = await publisher.PublishReelAsync(account.AccessToken, account.ExternalAccountId, request.VideoUrl, caption);
+            else
+                result = await publisher.PublishSingleImageAsync(account.AccessToken, account.ExternalAccountId, request.ImageUrl!, caption);
+
+            if (result.Success)
+            {
+                job.Status = PublishJobStatus.Published;
+                job.ExternalContainerId = result.ContainerId;
+                job.ExternalMediaId = result.MediaId;
+                job.FailureReason = null;
+            }
+            else
+            {
+                job.Status = PublishJobStatus.Failed;
+                job.ExternalContainerId = result.ContainerId;
+                job.FailureReason = result.Error;
+            }
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new
+            {
+                job.Id,
+                job.Status,
+                job.ExternalContainerId,
+                job.ExternalMediaId,
+                job.FailureReason
+            });
+        }).WithName("ExecutePublishJob");
+
         group.MapGet("/{id:guid}/status", async (Guid id, AppDbContext db) =>
         {
             var job = await db.PublishJobs.FindAsync(id);
@@ -88,4 +152,6 @@ public static class PublishJobEndpoints
 
         return group;
     }
+
+    public record ExecutePublishRequest(string? ImageUrl, string? VideoUrl);
 }

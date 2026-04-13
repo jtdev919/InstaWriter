@@ -1,5 +1,10 @@
+using System.ClientModel;
+using Azure.AI.OpenAI;
 using InstaWriter.Api.Endpoints;
+using InstaWriter.Core.Services;
+using InstaWriter.Infrastructure.AI;
 using InstaWriter.Infrastructure.Data;
+using InstaWriter.Infrastructure.Instagram;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +13,25 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpClient<IInstagramPublisher, InstagramPublisher>();
+
+var azureOpenAIEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
+var azureOpenAIKey = builder.Configuration["AzureOpenAI:ApiKey"];
+var azureOpenAIDeployment = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4o";
+
+if (!string.IsNullOrEmpty(azureOpenAIEndpoint) && !string.IsNullOrEmpty(azureOpenAIKey))
+{
+    builder.Services.AddSingleton(new AzureOpenAIClient(
+        new Uri(azureOpenAIEndpoint),
+        new ApiKeyCredential(azureOpenAIKey)));
+
+    builder.Services.AddSingleton<IContentGenerator>(sp =>
+        new AzureOpenAIContentGenerator(
+            sp.GetRequiredService<AzureOpenAIClient>(),
+            azureOpenAIDeployment,
+            sp.GetRequiredService<ILogger<AzureOpenAIContentGenerator>>()));
+}
 
 var app = builder.Build();
 
@@ -33,6 +57,8 @@ app.MapContentIdeaEndpoints();
 app.MapContentDraftEndpoints();
 app.MapPublishJobEndpoints();
 app.MapTaskItemEndpoints();
+app.MapChannelAccountEndpoints();
+app.MapContentGenerationEndpoints();
 
 app.Run();
 

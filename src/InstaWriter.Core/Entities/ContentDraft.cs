@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace InstaWriter.Core.Entities;
 
 public class ContentDraft
@@ -17,6 +19,7 @@ public class ContentDraft
     public ContentIdea? ContentIdea { get; set; }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ContentDraftStatus
 {
     Draft,
