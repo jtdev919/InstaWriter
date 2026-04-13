@@ -6,6 +6,7 @@ public class ContentDraft
 {
     public Guid Id { get; set; }
     public Guid ContentIdeaId { get; set; }
+    public Guid? ContentBriefId { get; set; }
     public string Caption { get; set; } = string.Empty;
     public string? Script { get; set; }
     public string? CarouselCopyJson { get; set; }
@@ -17,6 +18,7 @@ public class ContentDraft
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ContentIdea? ContentIdea { get; set; }
+    public ContentBrief? ContentBrief { get; set; }
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

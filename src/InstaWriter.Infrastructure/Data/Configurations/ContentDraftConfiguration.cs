@@ -28,5 +28,10 @@ public class ContentDraftConfiguration : IEntityTypeConfiguration<ContentDraft>
             .WithMany()
             .HasForeignKey(x => x.ContentIdeaId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.ContentBrief)
+            .WithMany()
+            .HasForeignKey(x => x.ContentBriefId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

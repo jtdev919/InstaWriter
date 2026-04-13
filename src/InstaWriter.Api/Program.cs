@@ -71,6 +71,7 @@ app.MapChannelAccountEndpoints();
 app.MapContentGenerationEndpoints();
 app.MapAssetEndpoints();
 app.MapBrandProfileEndpoints();
+app.MapContentBriefEndpoints();
 
 app.Run();
 

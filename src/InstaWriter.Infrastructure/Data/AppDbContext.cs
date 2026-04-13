@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<ChannelAccount> ChannelAccounts => Set<ChannelAccount>();
     public DbSet<Asset> Assets => Set<Asset>();
     public DbSet<BrandProfile> BrandProfiles => Set<BrandProfile>();
+    public DbSet<ContentBrief> ContentBriefs => Set<ContentBrief>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
