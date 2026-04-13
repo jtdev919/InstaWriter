@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"$PATH:/c/Program Files/dotnet\")",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/Git/bin:/c/Program Files/dotnet\")",
+      "Bash(export PATH=\"$PATH:/c/Program Files/Git/bin\")",
+      "Bash(git commit -m ':*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet:*)"
+    ]
+  }
+}

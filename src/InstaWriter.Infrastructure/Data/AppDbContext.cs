@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<TaskItem> TaskItems => Set<TaskItem>();
     public DbSet<ChannelAccount> ChannelAccounts => Set<ChannelAccount>();
     public DbSet<Asset> Assets => Set<Asset>();
+    public DbSet<BrandProfile> BrandProfiles => Set<BrandProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

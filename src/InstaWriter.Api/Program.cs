@@ -70,6 +70,7 @@ app.MapTaskItemEndpoints();
 app.MapChannelAccountEndpoints();
 app.MapContentGenerationEndpoints();
 app.MapAssetEndpoints();
+app.MapBrandProfileEndpoints();
 
 app.Run();
 
