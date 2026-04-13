@@ -6,6 +6,7 @@ using InstaWriter.Core.Services;
 using InstaWriter.Infrastructure.AI;
 using InstaWriter.Infrastructure.Data;
 using InstaWriter.Infrastructure.Instagram;
+using InstaWriter.Infrastructure.Orchestration;
 using InstaWriter.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpClient<IInstagramPublisher, InstagramPublisher>();
+builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 
 var azureOpenAIEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
 var azureOpenAIKey = builder.Configuration["AzureOpenAI:ApiKey"];

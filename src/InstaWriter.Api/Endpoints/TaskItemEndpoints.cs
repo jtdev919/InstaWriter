@@ -1,4 +1,5 @@
 using InstaWriter.Core.Entities;
+using InstaWriter.Core.Services;
 using InstaWriter.Core.Workflow;
 using InstaWriter.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -52,7 +53,7 @@ public static class TaskItemEndpoints
             return Results.Ok(task);
         }).WithName("UpdateTaskItem");
 
-        group.MapPost("/{id:guid}/transition", async (Guid id, TransitionRequest request, AppDbContext db) =>
+        group.MapPost("/{id:guid}/transition", async (Guid id, TransitionRequest request, AppDbContext db, IOrchestrationService orchestration) =>
         {
             var task = await db.TaskItems.FindAsync(id);
             if (task is null) return Results.NotFound();
@@ -63,13 +64,16 @@ public static class TaskItemEndpoints
             if (!StatusTransitions.CanTransition(task.Status, newStatus))
                 return Results.BadRequest(new { Error = $"Cannot transition from '{task.Status}' to '{newStatus}'.", Allowed = StatusTransitions.AllowedTransitions(task.Status) });
 
+            var fromStatus = task.Status;
             task.Status = newStatus;
             await db.SaveChangesAsync();
+
+            await orchestration.OnTaskItemTransitionAsync(task, fromStatus);
 
             return Results.Ok(task);
         }).WithName("TransitionTaskItem");
 
-        group.MapPost("/{id:guid}/complete", async (Guid id, AppDbContext db) =>
+        group.MapPost("/{id:guid}/complete", async (Guid id, AppDbContext db, IOrchestrationService orchestration) =>
         {
             var task = await db.TaskItems.FindAsync(id);
             if (task is null) return Results.NotFound();
@@ -77,8 +81,11 @@ public static class TaskItemEndpoints
             if (!StatusTransitions.CanTransition(task.Status, TaskItemStatus.Completed))
                 return Results.BadRequest(new { Error = $"Cannot complete a task in '{task.Status}' status.", Allowed = StatusTransitions.AllowedTransitions(task.Status) });
 
+            var fromStatus = task.Status;
             task.Status = TaskItemStatus.Completed;
             await db.SaveChangesAsync();
+
+            await orchestration.OnTaskItemTransitionAsync(task, fromStatus);
 
             return Results.Ok(task);
         }).WithName("CompleteTaskItem");

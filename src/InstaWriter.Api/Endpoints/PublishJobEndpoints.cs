@@ -45,7 +45,7 @@ public static class PublishJobEndpoints
             return Results.Created($"/api/publish/jobs/{job.Id}", job);
         }).WithName("CreatePublishJob");
 
-        group.MapPost("/{id:guid}/transition", async (Guid id, TransitionRequest request, AppDbContext db) =>
+        group.MapPost("/{id:guid}/transition", async (Guid id, TransitionRequest request, AppDbContext db, IOrchestrationService orchestration) =>
         {
             var job = await db.PublishJobs.FindAsync(id);
             if (job is null) return Results.NotFound();
@@ -56,13 +56,16 @@ public static class PublishJobEndpoints
             if (!StatusTransitions.CanTransition(job.Status, newStatus))
                 return Results.BadRequest(new { Error = $"Cannot transition from '{job.Status}' to '{newStatus}'.", Allowed = StatusTransitions.AllowedTransitions(job.Status) });
 
+            var fromStatus = job.Status;
             job.Status = newStatus;
             await db.SaveChangesAsync();
+
+            await orchestration.OnPublishJobTransitionAsync(job, fromStatus);
 
             return Results.Ok(job);
         }).WithName("TransitionPublishJob");
 
-        group.MapPost("/{id:guid}/execute", async (Guid id, ExecutePublishRequest request, AppDbContext db, IInstagramPublisher publisher) =>
+        group.MapPost("/{id:guid}/execute", async (Guid id, ExecutePublishRequest request, AppDbContext db, IInstagramPublisher publisher, IOrchestrationService orchestration) =>
         {
             var job = await db.PublishJobs
                 .Include(j => j.ContentDraft)
@@ -114,6 +117,8 @@ public static class PublishJobEndpoints
             }
 
             await db.SaveChangesAsync();
+
+            await orchestration.OnPublishJobTransitionAsync(job, PublishJobStatus.Publishing);
 
             return Results.Ok(new
             {

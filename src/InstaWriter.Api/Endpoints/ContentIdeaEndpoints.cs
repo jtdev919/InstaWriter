@@ -1,4 +1,5 @@
 using InstaWriter.Core.Entities;
+using InstaWriter.Core.Services;
 using InstaWriter.Core.Workflow;
 using InstaWriter.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -51,7 +52,7 @@ public static class ContentIdeaEndpoints
             return Results.Ok(idea);
         }).WithName("UpdateContentIdea");
 
-        group.MapPost("/{id:guid}/transition", async (Guid id, TransitionRequest request, AppDbContext db) =>
+        group.MapPost("/{id:guid}/transition", async (Guid id, TransitionRequest request, AppDbContext db, IOrchestrationService orchestration) =>
         {
             var idea = await db.ContentIdeas.FindAsync(id);
             if (idea is null) return Results.NotFound();
@@ -62,8 +63,11 @@ public static class ContentIdeaEndpoints
             if (!StatusTransitions.CanTransition(idea.Status, newStatus))
                 return Results.BadRequest(new { Error = $"Cannot transition from '{idea.Status}' to '{newStatus}'.", Allowed = StatusTransitions.AllowedTransitions(idea.Status) });
 
+            var fromStatus = idea.Status;
             idea.Status = newStatus;
             await db.SaveChangesAsync();
+
+            await orchestration.OnContentIdeaTransitionAsync(idea, fromStatus);
 
             return Results.Ok(idea);
         }).WithName("TransitionContentIdea");
