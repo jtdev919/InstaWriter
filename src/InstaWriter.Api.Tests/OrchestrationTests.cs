@@ -40,7 +40,8 @@ public class OrchestrationTests(TestWebApplicationFactory factory) : IClassFixtu
     public async ValueTask DraftToAwaitingReview_CreatesApproval()
     {
         var ct = TestContext.Current.CancellationToken;
-        var draft = await CreateDraft(ct);
+        // Use Medium risk idea to prevent auto-approval
+        var draft = await CreateDraft(ct, ContentRiskLevel.Medium);
 
         await _client.PostAsJsonAsync($"/api/content/drafts/{draft.Id}/transition", new { Status = "AwaitingReview" }, ct);
 
@@ -159,10 +160,13 @@ public class OrchestrationTests(TestWebApplicationFactory factory) : IClassFixtu
         return (await response.Content.ReadFromJsonAsync<ContentIdea>(ct))!;
     }
 
-    private async Task<ContentDraft> CreateDraft(CancellationToken ct)
+    private async Task<ContentDraft> CreateDraft(CancellationToken ct, ContentRiskLevel riskLevel = ContentRiskLevel.Low)
     {
-        var idea = await CreateIdea(ct);
-        var draft = new ContentDraft { ContentIdeaId = idea.Id, Caption = "Test orchestration caption for validation" };
+        var idea = new ContentIdea { Title = "Orchestration Test Idea", Summary = "Test", RiskLevel = riskLevel };
+        var ideaResponse = await _client.PostAsJsonAsync("/api/content/ideas", idea, ct);
+        var createdIdea = (await ideaResponse.Content.ReadFromJsonAsync<ContentIdea>(ct))!;
+
+        var draft = new ContentDraft { ContentIdeaId = createdIdea.Id, Caption = "Test orchestration caption for validation" };
         var response = await _client.PostAsJsonAsync("/api/content/drafts", draft, ct);
         return (await response.Content.ReadFromJsonAsync<ContentDraft>(ct))!;
     }

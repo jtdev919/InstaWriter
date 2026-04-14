@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace InstaWriter.Infrastructure.Orchestration;
 
-public class OrchestrationService(AppDbContext db, ILogger<OrchestrationService> logger) : IOrchestrationService
+public class OrchestrationService(AppDbContext db, IComplianceScorer complianceScorer, ILogger<OrchestrationService> logger) : IOrchestrationService
 {
     public async Task OnContentIdeaTransitionAsync(ContentIdea idea, ContentIdeaStatus fromStatus, string? correlationId = null)
     {
@@ -31,20 +31,71 @@ public class OrchestrationService(AppDbContext db, ILogger<OrchestrationService>
         switch (draft.Status)
         {
             case ContentDraftStatus.AwaitingReview:
-                // Create a pending Approval record
-                var approval = new Approval
-                {
-                    Id = Guid.NewGuid(),
-                    ContentDraftId = draft.Id,
-                    Approver = "unassigned",
-                    Decision = ApprovalDecision.Pending,
-                    Timestamp = DateTime.UtcNow
-                };
-                db.Approvals.Add(approval);
+                // Auto-score compliance
+                var complianceResult = complianceScorer.ScoreContent(draft.Caption, draft.Script);
+                draft.ComplianceScore = complianceResult.Score;
                 await db.SaveChangesAsync();
 
-                logger.LogInformation("Created pending Approval {ApprovalId} for Draft {DraftId}", approval.Id, draft.Id);
-                await LogWorkflowEventAsync("ApprovalCreated", "Approval", approval.Id, new { draftId = draft.Id }, correlationId);
+                logger.LogInformation("Compliance scored Draft {DraftId}: score={Score}, risk={Risk}, flags={FlagCount}",
+                    draft.Id, complianceResult.Score, complianceResult.RiskLevel, complianceResult.Flags.Length);
+                await LogWorkflowEventAsync("ComplianceScored", "ContentDraft", draft.Id,
+                    new { score = complianceResult.Score, riskLevel = complianceResult.RiskLevel, flags = complianceResult.Flags }, correlationId);
+
+                // Determine the parent idea's risk level for threshold comparison
+                var parentIdeaForRisk = await db.ContentIdeas.FindAsync(draft.ContentIdeaId);
+                var ideaRisk = parentIdeaForRisk?.RiskLevel ?? ContentRiskLevel.Medium;
+
+                // Auto-approve low-risk content with high compliance scores
+                var canAutoApprove = ideaRisk == ContentRiskLevel.Low && complianceResult.Score >= 0.8;
+
+                if (canAutoApprove)
+                {
+                    // Auto-approve: skip manual review
+                    var autoApproval = new Approval
+                    {
+                        Id = Guid.NewGuid(),
+                        ContentDraftId = draft.Id,
+                        Approver = "system:auto-approve",
+                        Decision = ApprovalDecision.Approved,
+                        Comments = $"Auto-approved: compliance score {complianceResult.Score:F2}, risk level {complianceResult.RiskLevel}",
+                        Timestamp = DateTime.UtcNow
+                    };
+                    db.Approvals.Add(autoApproval);
+
+                    // Move draft directly to Approved
+                    draft.Status = ContentDraftStatus.Approved;
+                    await db.SaveChangesAsync();
+
+                    logger.LogInformation("Auto-approved Draft {DraftId} (score={Score}, ideaRisk={Risk})",
+                        draft.Id, complianceResult.Score, ideaRisk);
+                    await LogWorkflowEventAsync("AutoApproved", "ContentDraft", draft.Id,
+                        new { score = complianceResult.Score, ideaRisk = ideaRisk.ToString() }, correlationId);
+
+                    // Trigger the Approved side effects (PublishJob creation)
+                    await OnContentDraftTransitionAsync(draft, ContentDraftStatus.AwaitingReview, correlationId);
+                }
+                else
+                {
+                    // Create a pending Approval record for manual review
+                    var approval = new Approval
+                    {
+                        Id = Guid.NewGuid(),
+                        ContentDraftId = draft.Id,
+                        Approver = "unassigned",
+                        Decision = ApprovalDecision.Pending,
+                        Comments = complianceResult.Flags.Length > 0
+                            ? $"Compliance flags: {string.Join("; ", complianceResult.Flags)}"
+                            : null,
+                        Timestamp = DateTime.UtcNow
+                    };
+                    db.Approvals.Add(approval);
+                    await db.SaveChangesAsync();
+
+                    logger.LogInformation("Created pending Approval {ApprovalId} for Draft {DraftId} (score={Score}, risk={Risk})",
+                        approval.Id, draft.Id, complianceResult.Score, complianceResult.RiskLevel);
+                    await LogWorkflowEventAsync("ApprovalCreated", "Approval", approval.Id,
+                        new { draftId = draft.Id, complianceScore = complianceResult.Score, riskLevel = complianceResult.RiskLevel }, correlationId);
+                }
                 break;
 
             case ContentDraftStatus.Approved:

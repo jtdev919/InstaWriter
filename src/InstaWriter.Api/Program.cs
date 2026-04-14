@@ -5,6 +5,7 @@ using InstaWriter.Api.Endpoints;
 using InstaWriter.Core.Services;
 using InstaWriter.Infrastructure.AI;
 using InstaWriter.Infrastructure.Data;
+using InstaWriter.Infrastructure.Compliance;
 using InstaWriter.Infrastructure.Instagram;
 using InstaWriter.Infrastructure.Orchestration;
 using InstaWriter.Infrastructure.Storage;
@@ -20,6 +21,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpClient<IInstagramPublisher, InstagramPublisher>();
 builder.Services.AddHttpClient<ITokenRefreshService, MetaTokenRefreshService>();
 builder.Services.AddHttpClient<IInsightsService, InstagramInsightsService>();
+builder.Services.AddSingleton<IComplianceScorer, RuleBasedComplianceScorer>();
 builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
 builder.Services.AddHostedService<InsightsCollectionBackgroundService>();

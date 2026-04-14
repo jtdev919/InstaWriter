@@ -74,14 +74,17 @@ public class WorkflowTransitionTests(TestWebApplicationFactory factory) : IClass
     public async ValueTask Draft_To_AwaitingReview_Succeeds()
     {
         var ct = TestContext.Current.CancellationToken;
-        var idea = await CreateAsync<ContentIdea>("/api/content/ideas", new { Title = "For draft transition" }, ct);
+        // Use Medium risk to prevent auto-approval
+        var idea = await CreateAsync<ContentIdea>("/api/content/ideas", new { Title = "For draft transition", RiskLevel = "Medium" }, ct);
         var draft = await CreateAsync<ContentDraft>("/api/content/drafts",
             new { ContentIdeaId = idea.Id, Caption = "Test caption" }, ct);
 
         var response = await TransitionAsync($"/api/content/drafts/{draft.Id}/transition", "AwaitingReview", ct);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var updated = await response.Content.ReadFromJsonAsync<ContentDraft>(ct);
+        // Re-fetch to get the latest status (orchestration may have modified it)
+        var fetchResp = await _client.GetAsync($"/api/content/drafts/{draft.Id}", ct);
+        var updated = await fetchResp.Content.ReadFromJsonAsync<ContentDraft>(ct);
         Assert.Equal(ContentDraftStatus.AwaitingReview, updated!.Status);
     }
 
@@ -102,7 +105,8 @@ public class WorkflowTransitionTests(TestWebApplicationFactory factory) : IClass
     public async ValueTask Draft_FullLifecycle_Succeeds()
     {
         var ct = TestContext.Current.CancellationToken;
-        var idea = await CreateAsync<ContentIdea>("/api/content/ideas", new { Title = "Draft lifecycle" }, ct);
+        // Use Medium risk to prevent auto-approval and test manual lifecycle
+        var idea = await CreateAsync<ContentIdea>("/api/content/ideas", new { Title = "Draft lifecycle", RiskLevel = "Medium" }, ct);
         var draft = await CreateAsync<ContentDraft>("/api/content/drafts",
             new { ContentIdeaId = idea.Id, Caption = "Lifecycle caption" }, ct);
 
@@ -118,7 +122,8 @@ public class WorkflowTransitionTests(TestWebApplicationFactory factory) : IClass
     public async ValueTask Draft_RejectedCanRevise()
     {
         var ct = TestContext.Current.CancellationToken;
-        var idea = await CreateAsync<ContentIdea>("/api/content/ideas", new { Title = "Rejection test" }, ct);
+        // Use Medium risk to prevent auto-approval
+        var idea = await CreateAsync<ContentIdea>("/api/content/ideas", new { Title = "Rejection test", RiskLevel = "Medium" }, ct);
         var draft = await CreateAsync<ContentDraft>("/api/content/drafts",
             new { ContentIdeaId = idea.Id, Caption = "To be rejected" }, ct);
 
