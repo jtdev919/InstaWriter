@@ -25,6 +25,7 @@ builder.Services.AddSingleton<IComplianceScorer, RuleBasedComplianceScorer>();
 builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
 builder.Services.AddHostedService<InsightsCollectionBackgroundService>();
+builder.Services.AddHostedService<DeadlineEscalationBackgroundService>();
 
 var azureOpenAIEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
 var azureOpenAIKey = builder.Configuration["AzureOpenAI:ApiKey"];
