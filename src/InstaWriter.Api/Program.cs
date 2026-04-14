@@ -5,6 +5,7 @@ using InstaWriter.Api.Endpoints;
 using InstaWriter.Core.Services;
 using InstaWriter.Infrastructure.AI;
 using InstaWriter.Infrastructure.Data;
+using InstaWriter.Infrastructure.Analytics;
 using InstaWriter.Infrastructure.Compliance;
 using InstaWriter.Infrastructure.Instagram;
 using InstaWriter.Infrastructure.Orchestration;
@@ -23,6 +24,7 @@ builder.Services.AddHttpClient<ITokenRefreshService, MetaTokenRefreshService>();
 builder.Services.AddHttpClient<IInsightsService, InstagramInsightsService>();
 builder.Services.AddSingleton<IComplianceScorer, RuleBasedComplianceScorer>();
 builder.Services.AddScoped<IFallbackSubstitutionService, FallbackSubstitutionService>();
+builder.Services.AddScoped<IPerformanceAnalyticsService, PerformanceAnalyticsService>();
 builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
 builder.Services.AddHostedService<InsightsCollectionBackgroundService>();
@@ -88,6 +90,7 @@ app.MapWorkflowEventEndpoints();
 app.MapInsightSnapshotEndpoints();
 app.MapCampaignEndpoints();
 app.MapContentPillarEndpoints();
+app.MapAnalyticsEndpoints();
 
 app.Run();
 
