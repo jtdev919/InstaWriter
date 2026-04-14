@@ -189,6 +189,43 @@ export interface ChannelAccount {
   createdAt: string;
 }
 
+// --- Analytics types ---
+
+export interface PostScore {
+  publishJobId: string;
+  contentDraftId: string;
+  pillarName?: string;
+  targetFormat?: string;
+  engagementScore: number;
+  reach: number;
+  totalEngagements: number;
+  engagementRate: number;
+}
+
+export interface PerformanceCluster {
+  groupKey: string;
+  groupType: string;
+  postCount: number;
+  avgEngagementScore: number;
+  avgReach: number;
+  avgEngagementRate: number;
+}
+
+export interface PillarPerformance {
+  pillarName: string;
+  postCount: number;
+  avgEngagementScore: number;
+  currentWeight: number;
+  recommendedWeight: number;
+}
+
+export interface PostRecommendation {
+  pillarName: string;
+  suggestedFormat: string;
+  rationale: string;
+  confidenceScore: number;
+}
+
 // --- Transition map (mirrors StatusTransitions.cs) ---
 
 export const IDEA_TRANSITIONS: Record<ContentIdeaStatus, ContentIdeaStatus[]> = {

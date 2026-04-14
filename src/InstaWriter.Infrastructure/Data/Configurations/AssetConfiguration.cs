@@ -34,11 +34,11 @@ public class AssetConfiguration : IEntityTypeConfiguration<Asset>
         builder.HasOne(x => x.ContentIdea)
             .WithMany()
             .HasForeignKey(x => x.ContentIdeaId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne(x => x.ContentDraft)
             .WithMany()
             .HasForeignKey(x => x.ContentDraftId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

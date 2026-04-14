@@ -48,6 +48,11 @@ if (!string.IsNullOrEmpty(blobConnectionString))
     builder.Services.AddSingleton(_ => new BlobContainerClient(blobConnectionString, containerName));
     builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 }
+else
+{
+    // Register a no-op blob service so DI resolves and endpoints don't fail at startup
+    builder.Services.AddSingleton<IBlobStorageService>(new InstaWriter.Infrastructure.Storage.NullBlobStorageService());
+}
 
 if (!string.IsNullOrEmpty(azureOpenAIEndpoint) && !string.IsNullOrEmpty(azureOpenAIKey))
 {

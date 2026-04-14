@@ -1,6 +1,7 @@
 using InstaWriter.Core.Entities;
 using InstaWriter.Core.Services;
 using InstaWriter.Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace InstaWriter.Api.Endpoints;
@@ -25,13 +26,13 @@ public static class AssetEndpoints
 
         group.MapPost("/upload", async (
             IFormFile file,
-            IBlobStorageService blobStorage,
-            AppDbContext db,
-            string? owner,
-            string? tags,
-            string? pillarName,
-            Guid? contentIdeaId,
-            Guid? contentDraftId) =>
+            [FromServices] IBlobStorageService blobStorage,
+            [FromServices] AppDbContext db,
+            [FromQuery] string? owner,
+            [FromQuery] string? tags,
+            [FromQuery] string? pillarName,
+            [FromQuery] Guid? contentIdeaId,
+            [FromQuery] Guid? contentDraftId) =>
         {
             await using var stream = file.OpenReadStream();
             var result = await blobStorage.UploadAsync(file.FileName, file.ContentType, stream);
@@ -77,7 +78,7 @@ public static class AssetEndpoints
             return Results.Ok(asset);
         }).WithName("UpdateAsset");
 
-        group.MapGet("/{id:guid}/download", async (Guid id, AppDbContext db, IBlobStorageService blobStorage) =>
+        group.MapGet("/{id:guid}/download", async (Guid id, [FromServices] AppDbContext db, [FromServices] IBlobStorageService blobStorage) =>
         {
             var asset = await db.Assets.FindAsync(id);
             if (asset is null) return Results.NotFound();
@@ -91,7 +92,7 @@ public static class AssetEndpoints
             return Results.File(stream, asset.ContentType, asset.FileName);
         }).WithName("DownloadAsset");
 
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IBlobStorageService blobStorage) =>
+        group.MapDelete("/{id:guid}", async (Guid id, [FromServices] AppDbContext db, [FromServices] IBlobStorageService blobStorage) =>
         {
             var asset = await db.Assets.FindAsync(id);
             if (asset is null) return Results.NotFound();

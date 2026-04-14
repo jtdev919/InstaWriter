@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InstaWriter.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260413183555_AddRemainingPhase1Entities")]
-    partial class AddRemainingPhase1Entities
+    [Migration("20260414200254_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -665,12 +665,12 @@ namespace InstaWriter.Infrastructure.Migrations
                     b.HasOne("InstaWriter.Core.Entities.ContentDraft", "ContentDraft")
                         .WithMany()
                         .HasForeignKey("ContentDraftId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("InstaWriter.Core.Entities.ContentIdea", "ContentIdea")
                         .WithMany()
                         .HasForeignKey("ContentIdeaId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ContentDraft");
 
@@ -704,7 +704,7 @@ namespace InstaWriter.Infrastructure.Migrations
                     b.HasOne("InstaWriter.Core.Entities.ContentBrief", "ContentBrief")
                         .WithMany()
                         .HasForeignKey("ContentBriefId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("InstaWriter.Core.Entities.ContentIdea", "ContentIdea")
                         .WithMany()

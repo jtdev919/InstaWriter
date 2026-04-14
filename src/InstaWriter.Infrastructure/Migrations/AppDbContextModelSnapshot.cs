@@ -662,12 +662,12 @@ namespace InstaWriter.Infrastructure.Migrations
                     b.HasOne("InstaWriter.Core.Entities.ContentDraft", "ContentDraft")
                         .WithMany()
                         .HasForeignKey("ContentDraftId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("InstaWriter.Core.Entities.ContentIdea", "ContentIdea")
                         .WithMany()
                         .HasForeignKey("ContentIdeaId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ContentDraft");
 
@@ -701,7 +701,7 @@ namespace InstaWriter.Infrastructure.Migrations
                     b.HasOne("InstaWriter.Core.Entities.ContentBrief", "ContentBrief")
                         .WithMany()
                         .HasForeignKey("ContentBriefId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("InstaWriter.Core.Entities.ContentIdea", "ContentIdea")
                         .WithMany()
