@@ -19,8 +19,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddHttpClient<IInstagramPublisher, InstagramPublisher>();
 builder.Services.AddHttpClient<ITokenRefreshService, MetaTokenRefreshService>();
+builder.Services.AddHttpClient<IInsightsService, InstagramInsightsService>();
 builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
+builder.Services.AddHostedService<InsightsCollectionBackgroundService>();
 
 var azureOpenAIEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
 var azureOpenAIKey = builder.Configuration["AzureOpenAI:ApiKey"];

@@ -59,6 +59,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             if (tokenRefreshDescriptor != null) services.Remove(tokenRefreshDescriptor);
             services.AddSingleton<ITokenRefreshService>(new FakeTokenRefreshService());
 
+            // Replace insights service with fake
+            var insightsDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IInsightsService));
+            if (insightsDescriptor != null) services.Remove(insightsDescriptor);
+            services.AddSingleton<IInsightsService>(new FakeInsightsService());
+
             // Remove background services for tests
             var hostedServices = services.Where(d => d.ServiceType == typeof(Microsoft.Extensions.Hosting.IHostedService)).ToList();
             foreach (var hs in hostedServices) services.Remove(hs);
