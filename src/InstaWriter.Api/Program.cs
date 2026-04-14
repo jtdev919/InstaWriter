@@ -8,6 +8,7 @@ using InstaWriter.Infrastructure.Data;
 using InstaWriter.Infrastructure.Analytics;
 using InstaWriter.Infrastructure.Compliance;
 using InstaWriter.Infrastructure.Instagram;
+using InstaWriter.Infrastructure.Notifications;
 using InstaWriter.Infrastructure.Orchestration;
 using InstaWriter.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,9 @@ builder.Services.AddHttpClient<IInsightsService, InstagramInsightsService>();
 builder.Services.AddSingleton<IComplianceScorer, RuleBasedComplianceScorer>();
 builder.Services.AddScoped<IFallbackSubstitutionService, FallbackSubstitutionService>();
 builder.Services.AddScoped<IPerformanceAnalyticsService, PerformanceAnalyticsService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddSingleton<INotificationChannelSender, EmailNotificationSender>();
+builder.Services.AddSingleton<INotificationChannelSender, SlackNotificationSender>();
 builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
 builder.Services.AddHostedService<InsightsCollectionBackgroundService>();
@@ -104,6 +108,7 @@ app.MapInsightSnapshotEndpoints();
 app.MapCampaignEndpoints();
 app.MapContentPillarEndpoints();
 app.MapAnalyticsEndpoints();
+app.MapNotificationEndpoints();
 
 app.Run();
 

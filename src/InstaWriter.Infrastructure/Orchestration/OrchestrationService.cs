@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace InstaWriter.Infrastructure.Orchestration;
 
-public class OrchestrationService(AppDbContext db, IComplianceScorer complianceScorer, ILogger<OrchestrationService> logger) : IOrchestrationService
+public class OrchestrationService(AppDbContext db, IComplianceScorer complianceScorer, INotificationService notifications, ILogger<OrchestrationService> logger) : IOrchestrationService
 {
     public async Task OnContentIdeaTransitionAsync(ContentIdea idea, ContentIdeaStatus fromStatus, string? correlationId = null)
     {
@@ -95,6 +95,12 @@ public class OrchestrationService(AppDbContext db, IComplianceScorer complianceS
                         approval.Id, draft.Id, complianceResult.Score, complianceResult.RiskLevel);
                     await LogWorkflowEventAsync("ApprovalCreated", "Approval", approval.Id,
                         new { draftId = draft.Id, complianceScore = complianceResult.Score, riskLevel = complianceResult.RiskLevel }, correlationId);
+
+                    // Notify reviewers
+                    await notifications.SendAsync(new NotificationRequest(
+                        "reviewer", "Draft awaiting review",
+                        $"Draft '{draft.Caption[..Math.Min(50, draft.Caption.Length)]}...' needs review. Compliance score: {complianceResult.Score:F2} ({complianceResult.RiskLevel}).",
+                        Core.Entities.NotificationChannel.InApp, "ContentDraft", draft.Id));
                 }
                 break;
 
@@ -163,6 +169,8 @@ public class OrchestrationService(AppDbContext db, IComplianceScorer complianceS
             case PublishJobStatus.Failed:
                 logger.LogWarning("PublishJob {JobId} failed: {Reason}", job.Id, job.FailureReason);
                 await LogWorkflowEventAsync("PublishFailed", "PublishJob", job.Id, new { reason = job.FailureReason }, correlationId);
+                await notifications.SendToAllChannelsAsync("manager", "Publish job failed",
+                    $"Publish job {job.Id} failed: {job.FailureReason}", "PublishJob", job.Id);
                 break;
 
             case PublishJobStatus.Cancelled:
@@ -199,6 +207,11 @@ public class OrchestrationService(AppDbContext db, IComplianceScorer complianceS
         {
             logger.LogWarning("TaskItem {TaskId} is now overdue (type: {TaskType}, owner: {Owner})", task.Id, task.TaskType, task.Owner);
             await LogWorkflowEventAsync("TaskOverdue", "TaskItem", task.Id, new { taskType = task.TaskType, owner = task.Owner }, correlationId);
+            await notifications.SendToAllChannelsAsync(
+                string.IsNullOrEmpty(task.Owner) ? "manager" : task.Owner,
+                $"Task overdue: {task.TaskType}",
+                $"Your task '{task.TaskType}' is overdue. {task.Description}",
+                "TaskItem", task.Id);
         }
 
         if (task.Status == TaskItemStatus.Completed && task.RelatedEntityType == "PublishJob" && task.RelatedEntityId.HasValue)

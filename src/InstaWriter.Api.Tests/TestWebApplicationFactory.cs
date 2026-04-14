@@ -64,6 +64,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             if (insightsDescriptor != null) services.Remove(insightsDescriptor);
             services.AddSingleton<IInsightsService>(new FakeInsightsService());
 
+            // Replace notification service with fake
+            var notifDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(INotificationService));
+            if (notifDescriptor != null) services.Remove(notifDescriptor);
+            services.AddSingleton<INotificationService>(new FakeNotificationService());
+
             // Remove background services for tests
             var hostedServices = services.Where(d => d.ServiceType == typeof(Microsoft.Extensions.Hosting.IHostedService)).ToList();
             foreach (var hs in hostedServices) services.Remove(hs);

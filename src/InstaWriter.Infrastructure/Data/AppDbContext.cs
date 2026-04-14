@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<InsightSnapshot> InsightSnapshots => Set<InsightSnapshot>();
     public DbSet<Campaign> Campaigns => Set<Campaign>();
     public DbSet<ContentPillar> ContentPillars => Set<ContentPillar>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
