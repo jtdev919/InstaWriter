@@ -1,4 +1,5 @@
 using InstaWriter.Core.Entities;
+using InstaWriter.Core.Services;
 using InstaWriter.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,6 +75,21 @@ public static class ContentBriefEndpoints
             await db.SaveChangesAsync();
             return Results.NoContent();
         }).WithName("DeleteContentBrief");
+
+        group.MapPost("/{id:guid}/fallback", async (Guid id, IFallbackSubstitutionService fallback) =>
+        {
+            var result = await fallback.AttemptFallbackAsync(id);
+
+            if (!result.Success)
+                return Results.BadRequest(new { Error = result.Reason });
+
+            return Results.Ok(new
+            {
+                result.SubstitutedAssetId,
+                result.CreatedDraftId,
+                Message = "Fallback asset substituted successfully."
+            });
+        }).WithName("FallbackSubstitution");
 
         return group;
     }

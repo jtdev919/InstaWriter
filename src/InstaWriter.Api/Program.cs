@@ -22,6 +22,7 @@ builder.Services.AddHttpClient<IInstagramPublisher, InstagramPublisher>();
 builder.Services.AddHttpClient<ITokenRefreshService, MetaTokenRefreshService>();
 builder.Services.AddHttpClient<IInsightsService, InstagramInsightsService>();
 builder.Services.AddSingleton<IComplianceScorer, RuleBasedComplianceScorer>();
+builder.Services.AddScoped<IFallbackSubstitutionService, FallbackSubstitutionService>();
 builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
 builder.Services.AddHostedService<InsightsCollectionBackgroundService>();
