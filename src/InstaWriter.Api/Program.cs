@@ -11,11 +11,17 @@ using InstaWriter.Infrastructure.Instagram;
 using InstaWriter.Infrastructure.Notifications;
 using InstaWriter.Infrastructure.Orchestration;
 using InstaWriter.Infrastructure.Storage;
+using InstaWriter.Api.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddAuthentication(ApiKeyAuthHandler.SchemeName)
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthHandler>(ApiKeyAuthHandler.SchemeName, null);
+builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -83,6 +89,9 @@ if (app.Environment.IsDevelopment())
     db.Database.Migrate();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGet("/api/health", () => Results.Ok(new
 {
     Status = "healthy",
@@ -90,25 +99,26 @@ app.MapGet("/api/health", () => Results.Ok(new
     Version = "0.1.0"
 }))
 .WithName("HealthCheck")
-.WithTags("System");
+.WithTags("System")
+.AllowAnonymous();
 
-app.MapContentIdeaEndpoints();
-app.MapContentDraftEndpoints();
-app.MapPublishJobEndpoints();
-app.MapTaskItemEndpoints();
-app.MapChannelAccountEndpoints();
-app.MapContentGenerationEndpoints();
-app.MapAssetEndpoints();
-app.MapBrandProfileEndpoints();
-app.MapContentBriefEndpoints();
-app.MapApprovalEndpoints();
-app.MapCalendarEventEndpoints();
-app.MapWorkflowEventEndpoints();
-app.MapInsightSnapshotEndpoints();
-app.MapCampaignEndpoints();
-app.MapContentPillarEndpoints();
-app.MapAnalyticsEndpoints();
-app.MapNotificationEndpoints();
+app.MapContentIdeaEndpoints().RequireAuthorization();
+app.MapContentDraftEndpoints().RequireAuthorization();
+app.MapPublishJobEndpoints().RequireAuthorization();
+app.MapTaskItemEndpoints().RequireAuthorization();
+app.MapChannelAccountEndpoints().RequireAuthorization();
+app.MapContentGenerationEndpoints().RequireAuthorization();
+app.MapAssetEndpoints().RequireAuthorization();
+app.MapBrandProfileEndpoints().RequireAuthorization();
+app.MapContentBriefEndpoints().RequireAuthorization();
+app.MapApprovalEndpoints().RequireAuthorization();
+app.MapCalendarEventEndpoints().RequireAuthorization();
+app.MapWorkflowEventEndpoints().RequireAuthorization();
+app.MapInsightSnapshotEndpoints().RequireAuthorization();
+app.MapCampaignEndpoints().RequireAuthorization();
+app.MapContentPillarEndpoints().RequireAuthorization();
+app.MapAnalyticsEndpoints().RequireAuthorization();
+app.MapNotificationEndpoints().RequireAuthorization();
 
 app.Run();
 

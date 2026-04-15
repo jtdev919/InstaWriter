@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
 class ApiError extends Error {
   status: number;
@@ -10,10 +11,16 @@ class ApiError extends Error {
   }
 }
 
+function authHeaders(extra?: Record<string, string>): Record<string, string> {
+  const h: Record<string, string> = { ...extra };
+  if (API_KEY) h["X-Api-Key"] = API_KEY;
+  return h;
+}
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const opts: RequestInit = {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
   };
   if (body !== undefined) opts.body = JSON.stringify(body);
 
@@ -32,7 +39,11 @@ export const api = {
   put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
   del: (path: string) => request<void>("DELETE", path),
   upload: async <T>(path: string, formData: FormData): Promise<T> => {
-    const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: formData });
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      body: formData,
+      headers: authHeaders(),
+    });
     if (!res.ok) {
       const errBody = await res.json().catch(() => null);
       throw new ApiError(res.status, errBody);
