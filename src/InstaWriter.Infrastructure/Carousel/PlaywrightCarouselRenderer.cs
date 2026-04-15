@@ -118,6 +118,7 @@ public partial class PlaywrightCarouselRenderer : ICarouselRenderer, IAsyncDispo
         html = html.Replace("{{BODY}}", Escape(slide.Body ?? ""));
         html = html.Replace("{{SUBTEXT}}", Escape(slide.Subtext ?? ""));
         html = html.Replace("{{CTA}}", Escape(slide.CTA ?? ""));
+        html = html.Replace("{{CATEGORY}}", Escape(slide.Category ?? ""));
         html = html.Replace("{{AUTHOR}}", Escape(author ?? ""));
         html = html.Replace("{{SLIDE_NUMBER}}", slide.SlideNumber.ToString());
 

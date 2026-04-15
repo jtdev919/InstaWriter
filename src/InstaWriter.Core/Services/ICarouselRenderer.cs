@@ -17,6 +17,7 @@ public record SlideData(
     string? Subtext = null,
     string? Highlight = null,
     string? CTA = null,
+    string? Category = null,
     int SlideNumber = 0);
 
 public record RenderedSlide(
