@@ -1,25 +1,42 @@
 import { useState } from "react";
 import { useContentBriefs, useCreateContentBrief, useDeleteContentBrief } from "../hooks/use-content-briefs";
 import { useContentIdeas } from "../hooks/use-content-ideas";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "../api/client";
 import StatusBadge from "../components/ui/StatusBadge";
 import type { ContentFormat } from "../types";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Image } from "lucide-react";
+
+interface RenderResult { briefId: string; slideCount: number; assetIds: string[]; message: string; }
 
 export default function ContentBriefs() {
   const { data: briefs, isLoading } = useContentBriefs();
   const { data: ideas } = useContentIdeas();
+  const qc = useQueryClient();
   const createBrief = useCreateContentBrief();
   const deleteBrief = useDeleteContentBrief();
+  const renderCarousel = useMutation({
+    mutationFn: (id: string) => api.post<RenderResult>(`/content/briefs/${id}/render-carousel`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assets"] }),
+  });
   const [showForm, setShowForm] = useState(false);
   const [contentIdeaId, setContentIdeaId] = useState("");
   const [targetFormat, setTargetFormat] = useState<ContentFormat>("StaticImage");
   const [objective, setObjective] = useState("");
   const [keyMessage, setKeyMessage] = useState("");
   const [requiresOriginalMedia, setRequiresOriginalMedia] = useState(false);
+  const [renderResult, setRenderResult] = useState<RenderResult | null>(null);
 
   const handleCreate = () => {
     createBrief.mutate({ contentIdeaId, targetFormat, objective, keyMessage, requiresOriginalMedia }, {
       onSuccess: () => { setShowForm(false); setObjective(""); setKeyMessage(""); },
+    });
+  };
+
+  const handleRender = (id: string) => {
+    setRenderResult(null);
+    renderCarousel.mutate(id, {
+      onSuccess: (data) => setRenderResult(data),
     });
   };
 
@@ -31,6 +48,13 @@ export default function ContentBriefs() {
           <Plus size={16} /> New Brief
         </button>
       </div>
+
+      {renderResult && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <p className="text-sm text-green-800 font-medium">{renderResult.message}</p>
+          <p className="text-xs text-green-600 mt-1">{renderResult.assetIds.length} slides saved to Assets.</p>
+        </div>
+      )}
 
       {showForm && (
         <div className="bg-white p-4 rounded-lg shadow mb-6 space-y-3">
@@ -81,7 +105,18 @@ export default function ContentBriefs() {
                   <td className="px-4 py-3 max-w-xs truncate">{b.keyMessage}</td>
                   <td className="px-4 py-3">{b.requiresOriginalMedia ? "Original" : "Library"}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => deleteBrief.mutate(b.id)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                    <div className="flex items-center gap-1">
+                      {b.targetFormat === "Carousel" && (
+                        <button
+                          onClick={() => handleRender(b.id)}
+                          disabled={renderCarousel.isPending}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 rounded disabled:opacity-50"
+                        >
+                          <Image size={12} /> {renderCarousel.isPending ? "Rendering..." : "Render"}
+                        </button>
+                      )}
+                      <button onClick={() => deleteBrief.mutate(b.id)} className="p-1 text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                    </div>
                   </td>
                 </tr>
               ))}

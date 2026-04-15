@@ -1,0 +1,171 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 1080px;
+  height: 1080px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  background: #0f0f0f;
+  color: #ffffff;
+}
+
+.slide {
+  width: 1080px;
+  height: 1080px;
+  display: flex;
+  flex-direction: column;
+  padding: 80px;
+  position: relative;
+}
+
+/* Title slide */
+.slide-title {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+.slide-title .headline {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  margin-bottom: 32px;
+}
+
+.slide-title .subtext {
+  font-size: 28px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+}
+
+.slide-title .author {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Content slide */
+.slide-content {
+  justify-content: center;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.slide-content .slide-number {
+  position: absolute;
+  top: 60px;
+  right: 80px;
+  font-size: 72px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.08);
+}
+
+.slide-content .headline {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 32px;
+  color: #e94560;
+}
+
+.slide-content .body {
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.slide-content .highlight {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 12px 24px;
+  background: rgba(233, 69, 96, 0.15);
+  border-left: 4px solid #e94560;
+  border-radius: 0 8px 8px 0;
+  font-size: 26px;
+  color: #e94560;
+  font-weight: 600;
+}
+
+/* CTA Bridge slide */
+.slide-cta-bridge {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+}
+
+.slide-cta-bridge .headline {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 24px;
+}
+
+.slide-cta-bridge .body {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  max-width: 800px;
+}
+
+/* CTA slide */
+.slide-cta {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(135deg, #e94560 0%, #c23152 50%, #0f3460 100%);
+}
+
+.slide-cta .headline {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 32px;
+}
+
+.slide-cta .cta-button {
+  display: inline-block;
+  padding: 20px 48px;
+  background: #ffffff;
+  color: #0f0f0f;
+  font-size: 28px;
+  font-weight: 700;
+  border-radius: 50px;
+  margin-bottom: 24px;
+}
+
+.slide-cta .subtext {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.slide-cta .author {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Brand bar */
+.brand-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #e94560, #0f3460);
+}

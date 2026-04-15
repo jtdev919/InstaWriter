@@ -1,5 +1,6 @@
 using InstaWriter.Core.Entities;
 using InstaWriter.Core.Services;
+using InstaWriter.Infrastructure.Carousel;
 using InstaWriter.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,6 +91,58 @@ public static class ContentBriefEndpoints
                 Message = "Fallback asset substituted successfully."
             });
         }).WithName("FallbackSubstitution");
+
+        group.MapPost("/{id:guid}/render-carousel", async (Guid id, AppDbContext db, ICarouselRenderer renderer, IBlobStorageService blobStorage) =>
+        {
+            var brief = await db.ContentBriefs
+                .Include(b => b.ContentIdea)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (brief is null) return Results.NotFound();
+
+            // Compose slide payload from the brief
+            var author = brief.ContentIdea?.PillarName ?? "InstaWriter";
+            var request = CarouselCompositionService.ComposeFromBrief(brief, $"@{author}");
+
+            // Render slides
+            var renderedSlides = await renderer.RenderCarouselAsync(request);
+
+            // Save each slide as an Asset
+            var assetIds = new List<Guid>();
+            foreach (var slide in renderedSlides)
+            {
+                using var stream = new MemoryStream(slide.PngData);
+                var uploadResult = await blobStorage.UploadAsync(slide.FileName, "image/png", stream);
+
+                var asset = new Asset
+                {
+                    Id = Guid.NewGuid(),
+                    FileName = slide.FileName,
+                    ContentType = "image/png",
+                    FileSizeBytes = uploadResult.FileSizeBytes,
+                    BlobUri = uploadResult.Uri,
+                    AssetType = AssetType.Carousel,
+                    Status = AssetStatus.Ready,
+                    PillarName = brief.ContentIdea?.PillarName,
+                    ContentIdeaId = brief.ContentIdeaId,
+                    Tags = $"carousel,slide-{slide.PageNumber}",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                db.Assets.Add(asset);
+                assetIds.Add(asset.Id);
+            }
+
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new
+            {
+                BriefId = brief.Id,
+                SlideCount = renderedSlides.Count,
+                AssetIds = assetIds,
+                Message = $"Rendered {renderedSlides.Count} carousel slides."
+            });
+        }).WithName("RenderCarousel");
 
         return group;
     }

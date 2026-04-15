@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<Campaign> Campaigns => Set<Campaign>();
     public DbSet<ContentPillar> ContentPillars => Set<ContentPillar>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<CarouselTemplate> CarouselTemplates => Set<CarouselTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -74,6 +74,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             if (insightsDescriptor != null) services.Remove(insightsDescriptor);
             services.AddSingleton<IInsightsService>(new FakeInsightsService());
 
+            // Replace carousel renderer with fake
+            var rendererDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ICarouselRenderer));
+            if (rendererDescriptor != null) services.Remove(rendererDescriptor);
+            services.AddSingleton<ICarouselRenderer>(new FakeCarouselRenderer());
+
             // Replace notification service with fake
             var notifDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(INotificationService));
             if (notifDescriptor != null) services.Remove(notifDescriptor);
