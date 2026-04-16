@@ -1098,3 +1098,591 @@ That is the enterprise-grade way to do it.
 
 [1]: https://developers.facebook.com/docs/instagram-platform/content-publishing/ "Publish Content - Instagram Platform - Meta for Developers"
 [2]: https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights/ "Instagram Media Insights - Meta for Developers"
+
+
+* Vanva automation
+
+Absolutely. For your use case, I would **not** make MCP the core integration pattern. I would use **Canva Connect APIs + Brand Templates + Autofill** as the primary automation path, and treat MCP as optional for future AI-assisted editing. Canva’s official platform supports programmatic design creation, asset upload, autofill of brand templates, export jobs, and return-navigation back into your application. OAuth 2.0 Authorization Code with PKCE is the required auth model, and some of the most valuable template-driven automation features depend on Canva Enterprise access. ([canva.dev][1])
+
+# Technical Specification
+
+## Automated Canva Carousel Generation for Instagram
+
+### Enterprise Architecture Specification
+
+## 1. Executive summary
+
+The objective is to eliminate the manual effort required to build an 8-page Instagram carousel by introducing a repeatable content automation pipeline that converts structured campaign inputs into a Canva design, allows optional human refinement, and exports the final asset package for Instagram publishing. The target outcome is to reduce creation time from hours to minutes while improving consistency, branding, and throughput. Canva officially supports the underlying primitives needed for this: design creation, asset upload, brand template autofill, export jobs, and application return-navigation. ([canva.dev][2])
+
+## 2. Recommended architecture decision
+
+### Decision
+
+Adopt a **template-driven automation architecture** built around:
+
+* Your Instagram automation tool as the orchestration layer
+* Canva Connect APIs as the design automation layer
+* Canva Brand Templates + Autofill as the content rendering layer
+* Optional editor handoff to Canva for human polish
+* Export back to your platform for scheduling/posting
+
+This is the strongest fit because Canva’s Autofill APIs are specifically designed for personalized, repeatable content generation from structured input data, and Canva’s own reference architectures for marketing automation use this same pattern. ([canva.dev][3])
+
+### Why this is the right pattern
+
+For an 8-page carousel, the expensive work is usually not “create a blank design,” but rather “apply layout rules, brand style, images, headlines, body copy, CTA blocks, and page sequencing consistently.” Brand Templates plus Autofill solve that much better than low-level page-by-page editing. Canva explicitly documents using Autofill with brand templates to generate marketing content at scale. ([canva.dev][4])
+
+### Why MCP should be secondary
+
+Canva’s MCP server is real and useful, but it is optimized for AI assistants interacting with Canva capabilities through tools. That is valuable for conversational workflows, but less deterministic than a governed integration for production campaign generation. For enterprise-grade automation, Connect APIs give you clearer control, repeatability, and backend security boundaries. ([canva.dev][1])
+
+---
+
+## 3. Business problem statement
+
+Current-state process:
+
+* Content idea is developed manually
+* Copy is rewritten for individual slides
+* Backgrounds, product imagery, layout, title blocks, and CTA elements are manually placed in Canva
+* Final design is exported and then uploaded to Instagram tools manually
+
+Pain points:
+
+* Excessive manual production time per carousel
+* Inconsistent branding across posts
+* Low content velocity
+* Heavy dependence on design labor for repetitive work
+* Difficult to scale across multiple campaigns, topics, or audience segments
+
+Target-state process:
+
+* User submits a content brief or structured campaign request
+* System generates slide-by-slide content payload
+* Canva template is selected automatically
+* Data fields are autofilled into all 8 slides
+* Assets are inserted automatically
+* Design is optionally opened in Canva for review/edit
+* Final output is exported and routed to the Instagram publishing workflow
+
+This model aligns directly with Canva’s supported flow of template-based design automation, editing, and export. ([canva.dev][5])
+
+---
+
+## 4. Scope
+
+### In scope
+
+* Automated generation of 8-page Instagram carousel designs
+* Reuse of branded Canva templates
+* Autofill of text, images, CTAs, and supporting slide data
+* Optional selection of templates by campaign type
+* Upload of assets from your system into Canva
+* Optional reviewer-in-the-loop editing inside Canva
+* Export of final designs for publishing
+* Metadata tracking and status orchestration in your automation tool
+
+### Out of scope for phase 1
+
+* Fully autonomous creative strategy generation without approval
+* Real-time social listening feedback loop
+* Automated A/B testing of multiple design variants
+* Dynamic video/reels generation
+* Full DAM replacement
+* Enterprise content rights management beyond required asset metadata
+
+---
+
+## 5. Target operating model
+
+The automation should support **three operating modes**:
+
+### Mode A: Fully automated
+
+Used for standard educational or promotional carousels where the template and structure are known in advance. The system fills the template and exports without human intervention.
+
+### Mode B: Assisted automation
+
+Used for most production cases. The system prebuilds the 8-page carousel, then hands it to Canva for optional refinement before export.
+
+### Mode C: Creative draft mode
+
+Used when the content is not fully normalized. The system generates a first draft and routes it for editorial review before rendering a final export.
+
+This is consistent with Canva’s return-navigation model and app-driven workflow design, where your system can initiate creation and then return the user after Canva editing is complete. ([canva.dev][6])
+
+---
+
+## 6. Logical architecture
+
+### Core components
+
+#### 6.1 Campaign intake service
+
+Receives input from your Instagram automation tool. Input may include:
+
+* campaign name
+* topic
+* audience
+* post objective
+* tone
+* key message
+* CTA
+* hashtags
+* product/service references
+* image references
+* offer/promo text
+* compliance notes
+
+#### 6.2 Content composition service
+
+Transforms a single campaign brief into a normalized 8-slide payload. This is where your content engine decides:
+
+* slide 1 = hook
+* slide 2 = problem
+* slide 3 = supporting insight
+* slide 4 = framework
+* slide 5 = proof/example
+* slide 6 = recommendation
+* slide 7 = CTA bridge
+* slide 8 = final CTA / follow / beta invite
+
+#### 6.3 Template orchestration service
+
+Maps the campaign to a Canva Brand Template ID and verifies required template fields exist.
+
+#### 6.4 Asset management service
+
+Uploads or references supporting assets such as:
+
+* logos
+* product images
+* profile images
+* background images
+* charts/icons
+* brand color metadata
+* legal or disclosure overlays if needed
+
+Canva supports asynchronous asset upload into the user’s content library. ([canva.dev][7])
+
+#### 6.5 Canva integration service
+
+Handles:
+
+* OAuth token lifecycle
+* template lookup
+* autofill job submission
+* design creation/opening
+* export job creation
+* job polling
+* return-navigation handling
+
+Canva’s token flow uses Authorization Code with PKCE, while token generation and refresh must occur from your backend because Canva’s token endpoints require client authentication and are not browser-callable. ([canva.dev][8])
+
+#### 6.6 Publishing handoff service
+
+Pushes exports into your Instagram publishing pipeline, scheduler, or content repository.
+
+#### 6.7 Audit and governance service
+
+Tracks:
+
+* who created the post
+* which template was used
+* which assets were injected
+* design/export job IDs
+* approval status
+* publish status
+* error conditions
+
+---
+
+## 7. End-to-end workflow
+
+### 7.1 Authorize Canva
+
+User connects their Canva account to your tool using OAuth. Your backend exchanges the authorization code for access and refresh tokens and stores them securely. Canva documents OAuth 2.0 Authorization Code with PKCE for Connect APIs, with refresh-token support for renewing access later. ([canva.dev][8])
+
+### 7.2 Select template
+
+Your application selects an approved carousel template from the user’s Canva Brand Templates catalog. Canva’s Autofill flow is built around publishing a design as a Brand Template and then reusing that template ID via API-driven automation. ([canva.dev][4])
+
+### 7.3 Build slide payload
+
+Your orchestration engine converts a campaign brief into an 8-slide structured payload, for example:
+
+* SLIDE_1_HEADLINE
+* SLIDE_1_SUBTEXT
+* SLIDE_1_IMAGE
+* SLIDE_2_HEADLINE
+* SLIDE_2_BODY
+* …
+* SLIDE_8_CTA
+* BRAND_NAME
+* AUTHOR_NAME
+* URL
+* DISCLOSURE
+
+### 7.4 Upload assets
+
+Your system uploads needed images to Canva or reuses known asset IDs. Canva supports asynchronous asset upload jobs into the user’s library. ([canva.dev][7])
+
+### 7.5 Trigger autofill
+
+Your system submits the structured data against the Brand Template. Canva’s Autofill APIs are intended for creating personalized designs from a brand template plus input data. Canva also notes this is suitable for marketing content and similar repeatable collateral. ([canva.dev][3])
+
+### 7.6 Optional human editing
+
+After the autofilled design is created, the user can open the editable Canva design for refinements such as typography tweaks, image crop adjustments, or alternate CTA wording. Canva’s Connect patterns support editing flows and return-navigation back to your system. ([canva.dev][6])
+
+### 7.7 Export final files
+
+Your system creates a design export job and retrieves the finished export from Canva. Canva supports export formats including PNG, JPG, PDF, PPTX, GIF, and MP4; export jobs are asynchronous and the download URLs are temporary. ([canva.dev][9])
+
+### 7.8 Publish or schedule
+
+Your Instagram automation tool ingests the exported pages and either:
+
+* stores them in a campaign repository
+* sends them to a social scheduling platform
+* queues them for human approval and publishing
+
+---
+
+## 8. Template design standard
+
+To make this automation work reliably, the Canva side must be engineered intentionally.
+
+### 8.1 Template pattern
+
+Create one master 8-page Brand Template per content family, such as:
+
+* Educational carousel
+* Founder story carousel
+* Product spotlight carousel
+* Beta user recruitment carousel
+* Quote/insight carousel
+
+### 8.2 Field naming convention
+
+Each placeholder should use stable field names:
+
+* `SLIDE_1_TITLE`
+* `SLIDE_1_BODY`
+* `SLIDE_1_BG`
+* `SLIDE_2_TITLE`
+* `SLIDE_2_BODY`
+* `SLIDE_2_IMAGE`
+* …
+* `SLIDE_8_CTA`
+* `AUTHOR_HANDLE`
+* `BRAND_LOGO`
+
+Canva’s Autofill guide shows the model of assigning named data fields to specific text/image frames within the template. ([canva.dev][4])
+
+### 8.3 Enterprise design rules
+
+The template should enforce:
+
+* fixed page count
+* consistent safe zones
+* locked brand elements
+* predefined typography hierarchy
+* reusable CTA placement
+* standard disclosure placement
+* constrained image crops
+* variant templates by message type rather than free-form design
+
+This keeps the automation deterministic and reduces post-generation cleanup.
+
+---
+
+## 9. Integration patterns
+
+### Preferred pattern: Backend orchestration + Canva editor handoff
+
+This is the most enterprise-friendly model.
+
+Flow:
+
+1. User starts in your Instagram automation app
+2. Your app assembles content and assets
+3. Canva APIs generate or autofill the design
+4. User optionally opens the design in Canva
+5. Canva returns the user to your app
+6. Your app exports and publishes
+
+This aligns with Canva’s official integration direction for external platforms and marketing workflows. ([canva.dev][2])
+
+### Secondary pattern: Internal AI assistant via MCP
+
+This could later support prompts like:
+
+* “Create this week’s health optimization carousel”
+* “Update slide 3 headline to be more direct”
+* “Swap the CTA to beta signup language”
+
+Canva’s MCP server exposes design creation/editing, assets, brand management, search, export, and commenting to compatible AI assistants. That is useful for internal authoring experiences, but I would layer it on after the core API-based workflow is stable. ([canva.dev][1])
+
+---
+
+## 10. Security architecture
+
+### 10.1 Authentication
+
+Use Canva OAuth 2.0 Authorization Code with PKCE. Token exchange and refresh must occur server-side because Canva’s token endpoint requires client authentication and is blocked from direct browser usage. ([canva.dev][8])
+
+### 10.2 Token handling
+
+Store access and refresh tokens in a secure secrets store. Rotate and revoke as part of user disconnect flows. Canva provides token generation, introspection, and revocation endpoints. ([canva.dev][10])
+
+### 10.3 Authorization
+
+Enforce tenant isolation in your platform so one brand cannot access another brand’s templates or exported designs. Canva’s shared responsibility model explicitly places request authorization, token handling, and content access validation responsibilities on the integrator side as well. ([canva.dev][11])
+
+### 10.4 Compliance and branding
+
+Your integration entry point must follow Canva branding rules, including use of the Canva logo or “Powered by Canva” messaging in the user entry surface. ([canva.dev][12])
+
+---
+
+## 11. Non-functional requirements
+
+### Availability
+
+* Target 99.9% for orchestration layer
+* Queue-based retries for asynchronous Canva jobs
+* Dead-letter handling for failed export/autofill jobs
+
+### Performance
+
+* Initial draft generation under 60 seconds target
+* Asset upload and export are asynchronous
+* Use background polling rather than synchronous blocking
+
+### Scalability
+
+* Support multiple brands, templates, and campaigns
+* Separate campaign generation from publishing pipeline
+* Use idempotent request keys for repeated submissions
+
+### Observability
+
+Capture:
+
+* request correlation ID
+* Canva design ID
+* Canva export job ID
+* template ID
+* user ID / tenant ID
+* job latency
+* failure reason
+* final export URL expiry timestamp
+
+### Resilience
+
+Canva documents rate limits for MCP tools, and Connect APIs also include endpoint-level rate limiting in various references. Design your integration with throttling, backoff, and queue-based orchestration rather than chatty real-time loops. ([canva.dev][13])
+
+---
+
+## 12. Data model
+
+### CampaignBrief
+
+* campaignId
+* brandId
+* objective
+* audience
+* theme
+* tone
+* keyMessage
+* cta
+* hashtags
+* sourcePrompt
+* complianceText
+
+### CarouselTemplate
+
+* templateId
+* templateType
+* canvaBrandTemplateId
+* pageCount
+* activeFlag
+* requiredFields
+* version
+
+### CarouselRenderRequest
+
+* renderRequestId
+* campaignId
+* templateId
+* status
+* requestedBy
+* requestedAt
+
+### CarouselSlideField
+
+* renderRequestId
+* fieldName
+* fieldType
+* fieldValue
+* sourceType
+
+### CanvaArtifact
+
+* renderRequestId
+* canvaDesignId
+* exportJobId
+* exportFormat
+* exportUrl
+* expiresAt
+* editUrl
+
+### PublishJob
+
+* publishJobId
+* renderRequestId
+* destinationPlatform
+* scheduledTime
+* publishStatus
+* publishedPostId
+
+---
+
+## 13. API contract recommendation for your platform
+
+### POST /campaigns/carousels/render
+
+Input:
+
+* campaign metadata
+* template type
+* structured content payload
+* asset URLs or asset references
+* mode: automated / assisted
+
+Output:
+
+* renderRequestId
+* status
+* editUrl
+* designId
+
+### POST /campaigns/carousels/export
+
+Input:
+
+* renderRequestId
+* format
+* export options
+
+Output:
+
+* exportJobId
+* status
+
+### POST /campaigns/carousels/publish
+
+Input:
+
+* renderRequestId
+* destination
+* scheduleTime
+
+Output:
+
+* publishJobId
+* status
+
+### GET /campaigns/carousels/{id}
+
+Output:
+
+* generation status
+* Canva artifact metadata
+* approval status
+* export status
+* publish status
+
+---
+
+## 14. Recommended implementation roadmap
+
+### Phase 1: Foundation
+
+* Set up Canva developer integration
+* Configure OAuth and token storage
+* Create 1 branded 8-page template
+* Implement one render flow using Autofill
+* Export PNG pages for Instagram
+
+### Phase 2: Assisted production
+
+* Add editor handoff to Canva
+* Add approval workflow
+* Add asset upload automation
+* Add template selection by campaign type
+
+### Phase 3: Scale and intelligence
+
+* Add AI-generated slide payloads from campaign briefs
+* Add multiple template families
+* Add reusable content blocks
+* Add analytics and campaign performance feedback loop
+* Optionally add MCP-based internal assistant for creative operators
+
+---
+
+## 15. Key design risks
+
+### Risk 1: Over-flexible templates
+
+If templates are too free-form, the automation becomes brittle. Standardize layouts aggressively.
+
+### Risk 2: Weak field governance
+
+If field names change in Canva without change control, renders fail or produce poor output. Template versioning is mandatory.
+
+### Risk 3: Human expectations of “full creativity”
+
+Automation is strongest for structured design systems, not unconstrained art direction. Position this as automated production, not fully autonomous creative direction.
+
+### Risk 4: Feature dependency on plan level
+
+Canva documents that Brand Templates and Autofill require Canva Enterprise in the relevant scenarios. Confirm plan entitlement before committing to production architecture. ([canva.dev][3])
+
+### Risk 5: Browser-side security mistakes
+
+Do not put client secret handling in the front end. Canva explicitly states token endpoints require backend calls. ([canva.dev][10])
+
+---
+
+## 16. Architecture recommendation
+
+My recommendation is to build this as a **governed content automation platform**, not a loose Canva script.
+
+Use:
+
+* **Canva Connect APIs** for production integration
+* **Brand Templates + Autofill** for deterministic carousel generation
+* **Optional Canva editing handoff** for human polish
+* **Export jobs** for downstream Instagram publishing
+* **Optional MCP** later for AI-assisted operations, not as the first production path
+
+That gives you the best balance of speed, control, scalability, and enterprise maintainability based on Canva’s currently documented capabilities. ([canva.dev][2])
+
+If you want, I can turn this into a **Word-ready formal architecture document** with sections like purpose, scope, current state, target state, architecture diagrams, requirements, risks, and implementation plan.
+
+[1]: https://www.canva.dev/docs/mcp/?utm_source=chatgpt.com "Canva Model Context Protocol (MCP)"
+[2]: https://www.canva.dev/docs/connect/?utm_source=chatgpt.com "Canva Connect APIs Documentation"
+[3]: https://www.canva.dev/docs/connect/api-reference/autofills/?utm_source=chatgpt.com "Autofill - Canva Connect APIs Documentation"
+[4]: https://www.canva.dev/docs/connect/autofill-guide/?utm_source=chatgpt.com "Autofill guide - Canva Connect APIs Documentation"
+[5]: https://www.canva.dev/docs/connect/reference-apps/nourish/?utm_source=chatgpt.com "Automate marketing campaigns with Canva - Reference apps"
+[6]: https://www.canva.dev/docs/connect/return-navigation-guide/?utm_source=chatgpt.com "Return navigation guide - Connect APIs"
+[7]: https://www.canva.dev/docs/connect/api-reference/assets/create-asset-upload-job/?utm_source=chatgpt.com "Create asset upload job - Assets - Canva Connect APIs ..."
+[8]: https://www.canva.dev/docs/connect/authentication/?utm_source=chatgpt.com "Authentication - Canva Connect APIs Documentation"
+[9]: https://www.canva.dev/docs/connect/api-reference/exports/create-design-export-job/?utm_source=chatgpt.com "Create design export job"
+[10]: https://www.canva.dev/docs/connect/api-reference/authentication/generate-access-token/?utm_source=chatgpt.com "Generate an access token - Authentication"
+[11]: https://www.canva.dev/docs/connect/guidelines/shared-responsibility/?utm_source=chatgpt.com "Shared responsibility model for the Connect APIs"
+[12]: https://www.canva.dev/docs/connect/guidelines/brand/?utm_source=chatgpt.com "Our Brand Guidelines - Canva Connect APIs Documentation"
+[13]: https://www.canva.dev/docs/mcp/tools/?utm_source=chatgpt.com "MCP tools and rate limits"

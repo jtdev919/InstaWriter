@@ -30,7 +30,9 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader()
               .AllowAnyMethod());
     options.AddPolicy("ProdCors", policy =>
-        policy.WithOrigins("https://instawriter-api.azurewebsites.net")
+        policy.WithOrigins(
+                "https://instawriter-api.azurewebsites.net",
+                "https://instawriterstorage.z13.web.core.windows.net")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });

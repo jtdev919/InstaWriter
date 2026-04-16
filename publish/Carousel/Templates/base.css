@@ -1,0 +1,207 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 1080px;
+  height: 1080px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  background: #0f0f23;
+  color: #ffffff;
+}
+
+.slide {
+  width: 1080px;
+  height: 1080px;
+  display: flex;
+  flex-direction: column;
+  padding: 80px;
+  position: relative;
+}
+
+/* Title slide */
+.slide-title {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: #1a1a2e;
+}
+
+.slide-title .category {
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: #8b5cf6;
+  margin-bottom: 40px;
+}
+
+.slide-title .headline {
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+
+.slide-title .headline em {
+  font-style: normal;
+  color: #8b5cf6;
+}
+
+.slide-title .subtext {
+  font-size: 28px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+}
+
+.slide-title .author {
+  position: absolute;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Content slide */
+.slide-content {
+  justify-content: center;
+  background: #0f0f23;
+}
+
+.slide-content .category {
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: #8b5cf6;
+  margin-bottom: 32px;
+}
+
+.slide-content .slide-number {
+  position: absolute;
+  top: 50px;
+  right: 80px;
+  font-size: 80px;
+  font-weight: 800;
+  color: rgba(139, 92, 246, 0.08);
+}
+
+.slide-content .headline {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  margin-bottom: 36px;
+}
+
+.slide-content .body {
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.slide-content .highlight {
+  display: inline-block;
+  margin-top: 28px;
+  padding: 14px 28px;
+  background: rgba(139, 92, 246, 0.12);
+  border-left: 4px solid #8b5cf6;
+  border-radius: 0 8px 8px 0;
+  font-size: 26px;
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+/* CTA Bridge slide */
+.slide-cta-bridge {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: #1a1a2e;
+}
+
+.slide-cta-bridge .headline {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.slide-cta-bridge .headline em {
+  font-style: normal;
+  color: #8b5cf6;
+}
+
+.slide-cta-bridge .body {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  max-width: 800px;
+}
+
+/* CTA slide */
+.slide-cta {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(180deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%);
+}
+
+.slide-cta .headline {
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+
+.slide-cta .headline em {
+  font-style: normal;
+  color: #8b5cf6;
+}
+
+.slide-cta .cta-button {
+  display: inline-block;
+  padding: 20px 56px;
+  background: #60a5fa;
+  color: #0f0f23;
+  font-size: 26px;
+  font-weight: 700;
+  border-radius: 50px;
+  margin-bottom: 28px;
+}
+
+.slide-cta .subtext {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.slide-cta .author {
+  position: absolute;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Brand bar */
+.brand-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #7c3aed, #60a5fa);
+}
