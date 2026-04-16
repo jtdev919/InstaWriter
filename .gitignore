@@ -49,3 +49,19 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 .DS_Store
+
+## Publish / Deploy artifacts
+publish/
+deploy.zip
+
+## Carousel render tool
+tools/render-carousel/node_modules/
+tools/render-carousel/output/
+
+## Secrets / local config
+appsettings.Development.json
+appsettings.*.local.json
+
+## Frontend
+frontend/node_modules/
+frontend/dist/
