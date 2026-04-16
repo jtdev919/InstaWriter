@@ -29,6 +29,10 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod());
+    options.AddPolicy("ProdCors", policy =>
+        policy.WithOrigins("https://instawriter-api.azurewebsites.net")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -53,7 +57,8 @@ var azureOpenAIEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
 var azureOpenAIKey = builder.Configuration["AzureOpenAI:ApiKey"];
 var azureOpenAIDeployment = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4o";
 
-var blobConnectionString = builder.Configuration.GetConnectionString("BlobStorage");
+var blobConnectionString = builder.Configuration.GetConnectionString("BlobStorage")
+    ?? builder.Configuration["BlobStorage:ConnectionString"];
 if (!string.IsNullOrEmpty(blobConnectionString))
 {
     var containerName = builder.Configuration["BlobStorage:ContainerName"] ?? "assets";
@@ -85,8 +90,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCors("DevCors");
     app.MapOpenApi();
+}
+else
+{
+    app.UseCors("ProdCors");
+}
 
-    using var scope = app.Services.CreateScope();
+// Auto-migrate on startup (single-user app, safe to do in all environments)
+using (var scope = app.Services.CreateScope())
+{
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
