@@ -304,6 +304,29 @@ function CarouselEditor({ draft, onClose }: { draft: ContentDraft; onClose: () =
         </div>
       </div>
 
+      {/* Quick Links */}
+      <div className="mt-4 pt-3 border-t border-gray-200">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold text-gray-600">Quick Links:</span>
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSdRhAStyQpK484QXvk2icOUqBqIVyzZFIQG8o_4thZX6WlnoA/viewform"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+          >
+            Beta Signup Form
+          </a>
+          <a
+            href="https://healthcoach.teknicalsolutionz.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-indigo-600 hover:text-indigo-800 underline"
+          >
+            Landing Page
+          </a>
+        </div>
+      </div>
+
       <p className="text-xs text-gray-400 mt-3">
         Click a slide to edit it. Changes preview live. Click "Save Slides" to store your edits.
       </p>
