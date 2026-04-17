@@ -65,38 +65,38 @@ function SlidePreview({ slide, slideNum, selected, onClick }: {
   const base = `w-40 h-40 flex-shrink-0 rounded-lg flex flex-col justify-center p-4 relative overflow-hidden text-white cursor-pointer hover:opacity-90 ${ring}`;
 
   if (slide.type === "title") return (
-    <div className={`${base} bg-[#1a1a2e] items-center text-center`} onClick={onClick}>
-      <p className="text-[7px] font-bold tracking-widest text-purple-400 uppercase mb-1">{slide.category}</p>
+    <div className={`${base} bg-gradient-to-br from-[#3B0764] to-[#6B21A8] items-center text-center`} onClick={onClick}>
+      <p className="text-[7px] font-bold tracking-widest text-[#9333EA] uppercase mb-1">{slide.category}</p>
       <p className="text-[10px] font-extrabold uppercase leading-tight">{slide.headline}</p>
       <p className="text-[6px] text-white/50 mt-1">{slide.body}</p>
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#9333EA] to-[#06B6D4]" />
     </div>
   );
 
   if (slide.type === "cta-bridge") return (
-    <div className={`${base} bg-[#1a1a2e] items-center text-center`} onClick={onClick}>
+    <div className={`${base} bg-gradient-to-br from-[#3B0764] to-[#6B21A8] items-center text-center`} onClick={onClick}>
       <p className="text-[9px] font-extrabold uppercase leading-tight mb-1">{slide.headline}</p>
       <p className="text-[6px] text-white/60">{slide.body}</p>
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#9333EA] to-[#06B6D4]" />
     </div>
   );
 
   if (slide.type === "cta") return (
-    <div className={`${base} items-center text-center`} style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%)" }} onClick={onClick}>
+    <div className={`${base} items-center text-center`} style={{ background: "linear-gradient(180deg, #3B0764 0%, #6B21A8 50%, #3B0764 100%)" }} onClick={onClick}>
       <p className="text-[9px] font-extrabold uppercase leading-tight mb-2">{slide.headline}</p>
-      <div className="px-2 py-1 bg-blue-400 text-[#0f0f23] text-[7px] font-bold rounded-full">{slide.cta}</div>
+      <div className="px-2 py-1 bg-gradient-to-r from-[#06B6D4] to-[#22D3EE] text-[#1a0a2e] text-[7px] font-bold rounded-full">{slide.cta}</div>
       <p className="text-[6px] text-white/50 mt-1">{slide.subtext}</p>
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#9333EA] to-[#06B6D4]" />
     </div>
   );
 
   return (
-    <div className={`${base} bg-[#0f0f23]`} onClick={onClick}>
-      <span className="absolute top-1 right-2 text-xl font-extrabold text-purple-500/10">{slideNum}</span>
-      <p className="text-[6px] font-bold tracking-widest text-purple-400 uppercase mb-1">{slide.category}</p>
+    <div className={`${base} bg-[#1a0a2e]`} onClick={onClick}>
+      <span className="absolute top-1 right-2 text-xl font-extrabold text-[#9333EA]/10">{slideNum}</span>
+      <p className="text-[6px] font-bold tracking-widest text-[#9333EA] uppercase mb-1">{slide.category}</p>
       <p className="text-[8px] font-extrabold uppercase leading-tight mb-1">{slide.headline}</p>
       <p className="text-[6px] text-white/70 leading-relaxed line-clamp-5">{slide.body}</p>
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#9333EA] to-[#06B6D4]" />
     </div>
   );
 }

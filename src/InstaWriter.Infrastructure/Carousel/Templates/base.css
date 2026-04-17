@@ -9,7 +9,7 @@ body {
   height: 1080px;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   overflow: hidden;
-  background: #0f0f23;
+  background: #1a0a2e;
   color: #ffffff;
 }
 
@@ -27,7 +27,7 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  background: #1a1a2e;
+  background: linear-gradient(135deg, #3B0764 0%, #6B21A8 100%);
 }
 
 .slide-title .category {
@@ -35,7 +35,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 4px;
-  color: #8b5cf6;
+  color: #9333EA;
   margin-bottom: 40px;
 }
 
@@ -50,7 +50,7 @@ body {
 
 .slide-title .headline em {
   font-style: normal;
-  color: #8b5cf6;
+  color: #9333EA;
 }
 
 .slide-title .subtext {
@@ -73,7 +73,7 @@ body {
 /* Content slide */
 .slide-content {
   justify-content: center;
-  background: #0f0f23;
+  background: #1a0a2e;
 }
 
 .slide-content .category {
@@ -81,7 +81,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 4px;
-  color: #8b5cf6;
+  color: #9333EA;
   margin-bottom: 32px;
 }
 
@@ -91,7 +91,7 @@ body {
   right: 80px;
   font-size: 80px;
   font-weight: 800;
-  color: rgba(139, 92, 246, 0.08);
+  color: rgba(147, 51, 234, 0.08);
 }
 
 .slide-content .headline {
@@ -113,11 +113,11 @@ body {
   display: inline-block;
   margin-top: 28px;
   padding: 14px 28px;
-  background: rgba(139, 92, 246, 0.12);
+  background: rgba(147, 51, 234, 0.12);
   border-left: 4px solid #8b5cf6;
   border-radius: 0 8px 8px 0;
   font-size: 26px;
-  color: #a78bfa;
+  color: #c084fc;
   font-weight: 600;
 }
 
@@ -126,7 +126,7 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  background: #1a1a2e;
+  background: linear-gradient(135deg, #3B0764 0%, #6B21A8 100%);
 }
 
 .slide-cta-bridge .headline {
@@ -139,7 +139,7 @@ body {
 
 .slide-cta-bridge .headline em {
   font-style: normal;
-  color: #8b5cf6;
+  color: #9333EA;
 }
 
 .slide-cta-bridge .body {
@@ -154,7 +154,7 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  background: linear-gradient(180deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%);
+  background: linear-gradient(180deg, #3B0764 0%, #6B21A8 50%, #3B0764 100%);
 }
 
 .slide-cta .headline {
@@ -167,13 +167,13 @@ body {
 
 .slide-cta .headline em {
   font-style: normal;
-  color: #8b5cf6;
+  color: #9333EA;
 }
 
 .slide-cta .cta-button {
   display: inline-block;
   padding: 20px 56px;
-  background: #60a5fa;
+  background: linear-gradient(135deg, #06B6D4, #22D3EE);
   color: #0f0f23;
   font-size: 26px;
   font-weight: 700;
@@ -203,5 +203,5 @@ body {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, #7c3aed, #60a5fa);
+  background: linear-gradient(90deg, #9333EA, #06B6D4);
 }
