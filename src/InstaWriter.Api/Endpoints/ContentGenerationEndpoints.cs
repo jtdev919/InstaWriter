@@ -81,9 +81,24 @@ public static class ContentGenerationEndpoints
             });
         }).WithName("ScoreDraftCompliance");
 
+        group.MapPost("/slides/rewrite", async (SlideRewriteRequest request, IContentGenerator generator) =>
+        {
+            var rewritten = await generator.RegenerateCaptionAsync(new RegenerateCaptionRequest(
+                $"HEADLINE: {request.Headline}\nBODY: {request.Body}",
+                $"Rewrite this Instagram carousel slide. {request.Direction ?? "Make it punchier and more engaging."} Return ONLY two lines: first line is the new headline (short, bold, under 8 words), second line is the new body text (2-3 sentences max). Do not include labels like 'HEADLINE:' or 'BODY:'."
+            ));
+
+            var lines = rewritten.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var newHeadline = lines.Length > 0 ? lines[0] : request.Headline;
+            var newBody = lines.Length > 1 ? string.Join(" ", lines.Skip(1)) : request.Body;
+
+            return Results.Ok(new { Headline = newHeadline, Body = newBody });
+        }).WithName("RewriteSlide");
+
         return group;
     }
 
     public record GenerateDraftFromIdeaRequest(Guid ContentIdeaId, string? TargetFormat);
     public record RegenerateCaptionApiRequest(string? Direction);
+    public record SlideRewriteRequest(string Headline, string Body, string? Direction);
 }

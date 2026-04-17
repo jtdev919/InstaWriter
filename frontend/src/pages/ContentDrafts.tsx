@@ -1,9 +1,315 @@
 import { useState } from "react";
-import { useContentDrafts, useCreateContentDraft, useTransitionContentDraft, useDeleteContentDraft, useRenderCarousel, useCarouselAssets } from "../hooks/use-content-drafts";
+import { useContentDrafts, useCreateContentDraft, useTransitionContentDraft, useDeleteContentDraft, useUpdateContentDraft } from "../hooks/use-content-drafts";
 import { useContentIdeas } from "../hooks/use-content-ideas";
 import StatusBadge from "../components/ui/StatusBadge";
-import { DRAFT_TRANSITIONS, type ContentDraftStatus } from "../types";
-import { Plus, Trash2, Image, Eye, X } from "lucide-react";
+import { DRAFT_TRANSITIONS, type ContentDraftStatus, type ContentDraft } from "../types";
+import { Plus, Trash2, Eye, X, Save, PlusCircle, Minus, Copy, Sparkles } from "lucide-react";
+
+interface SlideContent {
+  type: "title" | "content" | "cta-bridge" | "cta";
+  category: string;
+  headline: string;
+  body: string;
+  cta?: string;
+  subtext?: string;
+}
+
+function buildInitialSlides(draft: ContentDraft): SlideContent[] {
+  // Check if we have saved carousel JSON
+  if (draft.carouselCopyJson) {
+    try {
+      return JSON.parse(draft.carouselCopyJson);
+    } catch { /* fall through to auto-split */ }
+  }
+
+  const lines = draft.caption
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0 && !l.startsWith('#'));
+
+  const title = draft.contentIdea?.title ?? draft.coverText ?? "Swipe to learn more";
+  const category = draft.contentIdea?.pillarName?.toUpperCase() ?? "HEALTH & PERFORMANCE";
+
+  const bodyChunks: string[] = [];
+  let current = "";
+  for (const line of lines) {
+    if ((current + " " + line).length > 200 && current.length > 0) {
+      bodyChunks.push(current.trim());
+      current = line;
+    } else {
+      current = current ? current + " " + line : line;
+    }
+  }
+  if (current) bodyChunks.push(current.trim());
+  while (bodyChunks.length < 5) bodyChunks.push("");
+
+  return [
+    { type: "title", category, headline: title, body: "Swipe to learn more" },
+    { type: "content", category, headline: bodyChunks[0]?.split('.')[0] ?? "The Story", body: bodyChunks[0] ?? "" },
+    { type: "content", category, headline: bodyChunks[1]?.split('.')[0] ?? "Key Insight", body: bodyChunks[1] ?? "" },
+    { type: "content", category, headline: bodyChunks[2]?.split('.')[0] ?? "Why It Matters", body: bodyChunks[2] ?? "" },
+    { type: "content", category, headline: bodyChunks[3]?.split('.')[0] ?? "Take Action", body: bodyChunks[3] ?? "" },
+    { type: "content", category, headline: bodyChunks[4]?.split('.')[0] ?? "The Difference", body: bodyChunks[4] ?? "" },
+    { type: "cta-bridge", category, headline: "Follow for more", body: "Biohacking tips, build updates, and health insights." },
+    { type: "cta", category, headline: "Link in bio", body: "", cta: "Get Started Free", subtext: (draft.hashtagSet ?? "").slice(0, 80) },
+  ];
+}
+
+function SlidePreview({ slide, slideNum, selected, onClick }: {
+  slide: SlideContent;
+  slideNum: number;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  const ring = selected ? "ring-2 ring-purple-500 ring-offset-2" : "";
+  const base = `w-40 h-40 flex-shrink-0 rounded-lg flex flex-col justify-center p-4 relative overflow-hidden text-white cursor-pointer hover:opacity-90 ${ring}`;
+
+  if (slide.type === "title") return (
+    <div className={`${base} bg-[#1a1a2e] items-center text-center`} onClick={onClick}>
+      <p className="text-[7px] font-bold tracking-widest text-purple-400 uppercase mb-1">{slide.category}</p>
+      <p className="text-[10px] font-extrabold uppercase leading-tight">{slide.headline}</p>
+      <p className="text-[6px] text-white/50 mt-1">{slide.body}</p>
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+    </div>
+  );
+
+  if (slide.type === "cta-bridge") return (
+    <div className={`${base} bg-[#1a1a2e] items-center text-center`} onClick={onClick}>
+      <p className="text-[9px] font-extrabold uppercase leading-tight mb-1">{slide.headline}</p>
+      <p className="text-[6px] text-white/60">{slide.body}</p>
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+    </div>
+  );
+
+  if (slide.type === "cta") return (
+    <div className={`${base} items-center text-center`} style={{ background: "linear-gradient(180deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%)" }} onClick={onClick}>
+      <p className="text-[9px] font-extrabold uppercase leading-tight mb-2">{slide.headline}</p>
+      <div className="px-2 py-1 bg-blue-400 text-[#0f0f23] text-[7px] font-bold rounded-full">{slide.cta}</div>
+      <p className="text-[6px] text-white/50 mt-1">{slide.subtext}</p>
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+    </div>
+  );
+
+  return (
+    <div className={`${base} bg-[#0f0f23]`} onClick={onClick}>
+      <span className="absolute top-1 right-2 text-xl font-extrabold text-purple-500/10">{slideNum}</span>
+      <p className="text-[6px] font-bold tracking-widest text-purple-400 uppercase mb-1">{slide.category}</p>
+      <p className="text-[8px] font-extrabold uppercase leading-tight mb-1">{slide.headline}</p>
+      <p className="text-[6px] text-white/70 leading-relaxed line-clamp-5">{slide.body}</p>
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purple-600 to-blue-400" />
+    </div>
+  );
+}
+
+function CarouselEditor({ draft, onClose }: { draft: ContentDraft; onClose: () => void }) {
+  const [slides, setSlides] = useState<SlideContent[]>(() => buildInitialSlides(draft));
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [aiDirection, setAiDirection] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const updateDraft = useUpdateContentDraft();
+
+  const selected = slides[selectedIdx];
+
+  const updateSlide = (field: keyof SlideContent, value: string) => {
+    setSlides(prev => prev.map((s, i) => i === selectedIdx ? { ...s, [field]: value } : s));
+  };
+
+  const deleteSlide = () => {
+    if (slides.length <= 2) return;
+    setSlides(prev => prev.filter((_, i) => i !== selectedIdx));
+    setSelectedIdx(Math.min(selectedIdx, slides.length - 2));
+  };
+
+  const addSlide = () => {
+    if (slides.length >= 10) return;
+    const newSlide: SlideContent = {
+      type: "content",
+      category: selected.category,
+      headline: "New Slide",
+      body: "Add your content here.",
+    };
+    const insertAt = selectedIdx + 1;
+    setSlides(prev => [...prev.slice(0, insertAt), newSlide, ...prev.slice(insertAt)]);
+    setSelectedIdx(insertAt);
+  };
+
+  const cloneSlide = () => {
+    if (slides.length >= 10) return;
+    const cloned: SlideContent = { ...selected };
+    const insertAt = selectedIdx + 1;
+    setSlides(prev => [...prev.slice(0, insertAt), cloned, ...prev.slice(insertAt)]);
+    setSelectedIdx(insertAt);
+  };
+
+  const aiRewrite = async () => {
+    setAiLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE ?? "/api"}/content/slides/rewrite`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(import.meta.env.VITE_API_KEY ? { "X-Api-Key": import.meta.env.VITE_API_KEY } : {}),
+          },
+          body: JSON.stringify({
+            headline: selected.headline,
+            body: selected.body,
+            direction: aiDirection || null,
+          }),
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setSlides(prev =>
+          prev.map((s, i) =>
+            i === selectedIdx ? { ...s, headline: data.headline, body: data.body } : s
+          )
+        );
+        setAiDirection("");
+      }
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleSave = () => {
+    updateDraft.mutate({
+      id: draft.id,
+      carouselCopyJson: JSON.stringify(slides),
+    });
+  };
+
+  return (
+    <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">Carousel Editor</h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={updateDraft.isPending}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+          >
+            <Save size={12} /> {updateDraft.isPending ? "Saving..." : "Save Slides"}
+          </button>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+        </div>
+      </div>
+
+      {/* Slide strip */}
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
+        {slides.map((slide, i) => (
+          <div key={i} className="text-center flex-shrink-0">
+            <SlidePreview slide={slide} slideNum={i + 1} selected={i === selectedIdx} onClick={() => setSelectedIdx(i)} />
+            <p className="text-[10px] text-gray-500 mt-1">Slide {i + 1}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Editor for selected slide */}
+      <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-xs font-semibold text-gray-500 uppercase">Editing Slide {selectedIdx + 1} of {slides.length}</span>
+          <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">{selected.type}</span>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={addSlide}
+              disabled={slides.length >= 10}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-700 hover:bg-green-200 rounded disabled:opacity-30"
+              title="Add blank slide after this one"
+            >
+              <PlusCircle size={12} /> Add
+            </button>
+            <button
+              onClick={cloneSlide}
+              disabled={slides.length >= 10}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded disabled:opacity-30"
+              title="Clone this slide"
+            >
+              <Copy size={12} /> Clone
+            </button>
+            <button
+              onClick={deleteSlide}
+              disabled={slides.length <= 2}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded disabled:opacity-30"
+              title="Delete this slide"
+            >
+              <Minus size={12} /> Delete
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Category / Label</label>
+            <input
+              value={selected.category}
+              onChange={(e) => updateSlide("category", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Headline</label>
+            <input
+              value={selected.headline}
+              onChange={(e) => updateSlide("headline", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs font-medium text-gray-600 block mb-1">
+              {selected.type === "title" ? "Subtext" : selected.type === "cta" ? "Button Text" : "Body"}
+            </label>
+            <textarea
+              value={selected.type === "cta" ? (selected.cta ?? "") : selected.body}
+              onChange={(e) => updateSlide(selected.type === "cta" ? "cta" : "body", e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              rows={3}
+            />
+          </div>
+          {selected.type === "cta" && (
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-gray-600 block mb-1">Subtext (below button)</label>
+              <input
+                value={selected.subtext ?? ""}
+                onChange={(e) => updateSlide("subtext", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* AI Rewrite */}
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <div className="flex items-center gap-2">
+            <Sparkles size={14} className="text-purple-500" />
+            <span className="text-xs font-semibold text-gray-600">AI Rewrite</span>
+          </div>
+          <div className="flex gap-2 mt-2">
+            <input
+              value={aiDirection}
+              onChange={(e) => setAiDirection(e.target.value)}
+              placeholder="Optional direction, e.g. 'make it more personal' or 'add urgency'"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+            <button
+              onClick={aiRewrite}
+              disabled={aiLoading}
+              className="flex items-center gap-1 px-3 py-2 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 whitespace-nowrap"
+            >
+              <Sparkles size={12} /> {aiLoading ? "Rewriting..." : "Rewrite with AI"}
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">AI will rewrite the headline and body of this slide. Add direction to guide the tone.</p>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 mt-3">
+        Click a slide to edit it. Changes preview live. Click "Save Slides" to store your edits.
+      </p>
+    </div>
+  );
+}
 
 export default function ContentDrafts() {
   const { data: drafts, isLoading } = useContentDrafts();
@@ -11,22 +317,16 @@ export default function ContentDrafts() {
   const createDraft = useCreateContentDraft();
   const transition = useTransitionContentDraft();
   const deleteDraft = useDeleteContentDraft();
-  const renderCarousel = useRenderCarousel();
   const [showForm, setShowForm] = useState(false);
   const [contentIdeaId, setContentIdeaId] = useState("");
   const [caption, setCaption] = useState("");
-  const [previewDraftId, setPreviewDraftId] = useState<string | null>(null);
-  const { data: carouselAssets } = useCarouselAssets(previewDraftId);
+  const [editorDraftId, setEditorDraftId] = useState<string | null>(null);
+
+  const editorDraft = drafts?.find(d => d.id === editorDraftId);
 
   const handleCreate = () => {
     createDraft.mutate({ contentIdeaId, caption }, {
       onSuccess: () => { setShowForm(false); setCaption(""); },
-    });
-  };
-
-  const handleRenderCarousel = (draftId: string) => {
-    renderCarousel.mutate(draftId, {
-      onSuccess: () => setPreviewDraftId(draftId),
     });
   };
 
@@ -52,30 +352,9 @@ export default function ContentDrafts() {
         </div>
       )}
 
-      {/* Carousel Preview Panel */}
-      {previewDraftId && (
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">Carousel Preview</h2>
-            <button onClick={() => setPreviewDraftId(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
-          </div>
-          {carouselAssets && carouselAssets.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-3">
-              {carouselAssets.map((asset, i) => (
-                <div key={asset.id} className="flex-shrink-0">
-                  <img
-                    src={asset.blobUri ?? ""}
-                    alt={`Slide ${i + 1}`}
-                    className="w-48 h-48 object-cover rounded-lg border border-gray-200 shadow-sm"
-                  />
-                  <p className="text-xs text-gray-500 text-center mt-1">Slide {i + 1}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-400 text-sm">Loading slides...</p>
-          )}
-        </div>
+      {/* Carousel Editor Panel */}
+      {editorDraft && (
+        <CarouselEditor draft={editorDraft} onClose={() => setEditorDraftId(null)} />
       )}
 
       {isLoading ? <p className="text-gray-500">Loading...</p> : (
@@ -110,20 +389,11 @@ export default function ContentDrafts() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => handleRenderCarousel(d.id)}
-                          disabled={renderCarousel.isPending}
-                          className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 rounded disabled:opacity-50"
-                          title="Generate carousel slides"
+                          onClick={() => setEditorDraftId(editorDraftId === d.id ? null : d.id)}
+                          className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-200 rounded"
+                          title="Edit carousel slides"
                         >
-                          <Image size={12} />
-                          {renderCarousel.isPending && renderCarousel.variables === d.id ? "Rendering..." : "Carousel"}
-                        </button>
-                        <button
-                          onClick={() => setPreviewDraftId(previewDraftId === d.id ? null : d.id)}
-                          className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded"
-                          title="Preview carousel"
-                        >
-                          <Eye size={12} /> Preview
+                          <Eye size={12} /> Carousel
                         </button>
                         {allowed.map((s) => (
                           <button key={s} onClick={() => transition.mutate({ id: d.id, status: s })} className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded">{s}</button>
