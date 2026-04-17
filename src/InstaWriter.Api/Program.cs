@@ -12,6 +12,7 @@ using InstaWriter.Infrastructure.Instagram;
 using InstaWriter.Infrastructure.Notifications;
 using InstaWriter.Infrastructure.Orchestration;
 using InstaWriter.Infrastructure.Storage;
+using InstaWriter.Infrastructure.Storage;
 using InstaWriter.Api.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,9 @@ builder.Services.AddScoped<IOrchestrationService, OrchestrationService>();
 builder.Services.AddHostedService<TokenRefreshBackgroundService>();
 builder.Services.AddHostedService<InsightsCollectionBackgroundService>();
 builder.Services.AddHostedService<DeadlineEscalationBackgroundService>();
+builder.Services.AddHttpClient<TelegramNotificationSender>();
+builder.Services.AddScoped<TelegramNotificationSender>();
+builder.Services.AddHostedService<ContentReminderBackgroundService>();
 
 var azureOpenAIEndpoint = builder.Configuration["AzureOpenAI:Endpoint"];
 var azureOpenAIKey = builder.Configuration["AzureOpenAI:ApiKey"];
