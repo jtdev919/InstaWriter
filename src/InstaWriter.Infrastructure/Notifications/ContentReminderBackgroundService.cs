@@ -1,3 +1,6 @@
+using InstaWriter.Core.Entities;
+using InstaWriter.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,7 +20,6 @@ public class ContentReminderBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Wait 30 seconds for startup
         await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -27,11 +29,25 @@ public class ContentReminderBackgroundService : BackgroundService
                 var now = DateTime.UtcNow.AddHours(-4); // EST
                 var hour = now.Hour;
                 var day = now.DayOfWeek;
+                var today = now.Date;
 
                 using var scope = _services.CreateScope();
                 var telegram = scope.ServiceProvider.GetRequiredService<TelegramNotificationSender>();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                // Daily 9 AM EST — engagement reminder
+                // Check if we already created tasks for today (avoid duplicates on restart)
+                var alreadyCreated = await db.TaskItems
+                    .AnyAsync(t => t.CreatedAt.Date == DateTime.UtcNow.Date
+                        && t.TaskType == "ContentReminder"
+                        && t.Owner == "system", stoppingToken);
+
+                if (!alreadyCreated && hour == 7)
+                {
+                    // Create today's tasks and calendar events
+                    await CreateDailyTasks(db, telegram, day, today, stoppingToken);
+                }
+
+                // Send time-specific reminders (no task creation, just nudges)
                 if (hour == 9)
                 {
                     await telegram.SendAsync(
@@ -44,107 +60,6 @@ public class ContentReminderBackgroundService : BackgroundService
                         "30 minutes. Non-negotiable. Go!");
                 }
 
-                // Monday 8 AM — content creation day
-                if (day == DayOfWeek.Monday && hour == 8)
-                {
-                    await telegram.SendAsync(
-                        "📋 Monday -- Content Creation Day\n" +
-                        "Estimated time: 45-60 minutes\n" +
-                        "Publish target: Wednesday 8:00 AM & Friday 8:00 AM\n\n" +
-                        "Create this week's carousels:\n" +
-                        "1. Open InstaWriter dashboard (5 min)\n" +
-                        "2. Create 3-4 content ideas (10 min)\n" +
-                        "3. Generate AI drafts (5 min)\n" +
-                        "4. Edit slides in carousel editor (20-30 min)\n" +
-                        "5. Approve and schedule (5 min)\n\n" +
-                        "Dashboard: https://instawriterstorage.z13.web.core.windows.net/");
-                }
-
-                // Tuesday 8 AM — filming day
-                if (day == DayOfWeek.Tuesday && hour == 8)
-                {
-                    await telegram.SendAsync(
-                        "🎬 Tuesday -- Reel Filming Day\n" +
-                        "Estimated time: 30-45 minutes\n" +
-                        "Publish target: Tuesday 12:00 PM, Thursday 12:00 PM, Saturday 10:00 AM\n\n" +
-                        "Batch film 2-3 Reels:\n" +
-                        "• Talking head tip, 30-60 sec (10 min)\n" +
-                        "• App demo or behind-the-scenes (10 min)\n" +
-                        "• Day in the life / workout clip (10 min)\n\n" +
-                        "Change shirts between takes for variety.");
-                }
-
-                // Wednesday 8 AM — schedule and post
-                if (day == DayOfWeek.Wednesday && hour == 8)
-                {
-                    await telegram.SendAsync(
-                        "📅 Wednesday -- Schedule and Post\n" +
-                        "Estimated time: 15-20 minutes\n" +
-                        "Publish target: TODAY 12:00 PM (carousel)\n\n" +
-                        "1. Review and approve pending drafts (5 min)\n" +
-                        "2. Create publish jobs with schedule times (5 min)\n" +
-                        "3. Post today's carousel (5 min)\n\n" +
-                        "Dashboard: https://instawriterstorage.z13.web.core.windows.net/");
-                }
-
-                // Thursday 12 PM — reel post reminder
-                if (day == DayOfWeek.Thursday && hour == 12)
-                {
-                    await telegram.SendAsync(
-                        "🎬 Thursday -- Post a Reel\n" +
-                        "Estimated time: 5-10 minutes\n" +
-                        "Publish target: NOW (12:00 PM)\n\n" +
-                        "Post one of the Reels you filmed Tuesday.\n" +
-                        "Add caption + hashtags, then post.\n" +
-                        "Spend 15 min engaging on the platform right after posting.");
-                }
-
-                // Friday 8 AM — carousel + engagement post
-                if (day == DayOfWeek.Friday && hour == 8)
-                {
-                    await telegram.SendAsync(
-                        "🔥 Friday -- Carousel + Engagement Post\n" +
-                        "Estimated time: 15-20 minutes\n" +
-                        "Publish target: TODAY 12:00 PM (carousel), 5:00 PM (engagement post)\n\n" +
-                        "Morning: Post this week's second carousel (5 min)\n" +
-                        "Afternoon: Post an engagement-bait post (10 min):\n" +
-                        "• Hot take or controversial opinion\n" +
-                        "• Poll or question\n" +
-                        "• \"What's your experience with [topic]?\"");
-                }
-
-                // Saturday 10 AM — reel + stories
-                if (day == DayOfWeek.Saturday && hour == 10)
-                {
-                    await telegram.SendAsync(
-                        "📱 Saturday -- Reel + Stories Day\n" +
-                        "Estimated time: 15-20 minutes\n" +
-                        "Publish target: NOW 10:00 AM (reel)\n\n" +
-                        "1. Post your 3rd Reel of the week (5 min)\n" +
-                        "2. Post 3-5 casual Stories throughout the day:\n" +
-                        "   • Behind the scenes\n" +
-                        "   • Weekend routine\n" +
-                        "   • Something personal\n\n" +
-                        "Weekends are high-engagement on Instagram.");
-                }
-
-                // Sunday 10 AM — weekly review
-                if (day == DayOfWeek.Sunday && hour == 10)
-                {
-                    await telegram.SendAsync(
-                        "📊 Sunday -- Weekly Analytics Review\n" +
-                        "Estimated time: 20-30 minutes\n" +
-                        "No publish today -- rest and plan\n\n" +
-                        "Check Instagram Insights:\n" +
-                        "• Which posts got the most saves and shares? (5 min)\n" +
-                        "• Follower growth this week? (2 min)\n" +
-                        "• Best posting times for YOUR audience? (3 min)\n" +
-                        "• Plan next week's content topics (10-15 min)\n\n" +
-                        "Feed winners back into Monday's content ideas.\n\n" +
-                        "Dashboard: https://instawriterstorage.z13.web.core.windows.net/");
-                }
-
-                // Daily 6 PM EST — evening story reminder
                 if (hour == 18)
                 {
                     await telegram.SendAsync(
@@ -161,8 +76,179 @@ public class ContentReminderBackgroundService : BackgroundService
                 _logger.LogError(ex, "Content reminder error");
             }
 
-            // Check every hour
             await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
         }
+    }
+
+    private async Task CreateDailyTasks(AppDbContext db, TelegramNotificationSender telegram, DayOfWeek day, DateTime today, CancellationToken ct)
+    {
+        var tasks = new List<(string title, string description, string message, int durationMin, DateTime start, DateTime end, TaskPriority priority)>();
+
+        // Daily engagement task
+        tasks.Add((
+            "10-10-10 Engagement",
+            "Reply to all comments, comment on 10 niche accounts, engage with 10 Stories via DMs",
+            "",
+            30,
+            today.AddHours(9),
+            today.AddHours(9).AddMinutes(30),
+            TaskPriority.High
+        ));
+
+        // Daily stories
+        tasks.Add((
+            "Evening Stories",
+            "Post 2-3 Stories: behind the scenes, health tip, poll or question",
+            "",
+            10,
+            today.AddHours(18),
+            today.AddHours(18).AddMinutes(10),
+            TaskPriority.Medium
+        ));
+
+        // Day-specific tasks
+        switch (day)
+        {
+            case DayOfWeek.Monday:
+                tasks.Add((
+                    "Create Carousel Drafts",
+                    "Open InstaWriter dashboard. Create 3-4 content ideas, generate AI drafts, edit slides in carousel editor, approve and schedule.",
+                    "📋 Monday -- Content Creation Day\nEstimated time: 45-60 minutes\nPublish target: Wednesday 12:00 PM & Friday 12:00 PM\n\nDashboard: https://instawriterstorage.z13.web.core.windows.net/",
+                    60,
+                    today.AddHours(8),
+                    today.AddHours(9),
+                    TaskPriority.High
+                ));
+                break;
+
+            case DayOfWeek.Tuesday:
+                tasks.Add((
+                    "Film 2-3 Reels",
+                    "Batch film: talking head tip (30-60 sec), app demo or behind-the-scenes, day in the life or workout clip. Change shirts between takes.",
+                    "🎬 Tuesday -- Reel Filming Day\nEstimated time: 30-45 minutes\nPublish target: Tuesday 12:00 PM, Thursday 12:00 PM, Saturday 10:00 AM",
+                    45,
+                    today.AddHours(8),
+                    today.AddHours(8).AddMinutes(45),
+                    TaskPriority.High
+                ));
+                tasks.Add((
+                    "Post Reel",
+                    "Post one of the Reels you just filmed. Add caption + hashtags. Spend 15 min engaging after posting.",
+                    "",
+                    15,
+                    today.AddHours(12),
+                    today.AddHours(12).AddMinutes(15),
+                    TaskPriority.High
+                ));
+                break;
+
+            case DayOfWeek.Wednesday:
+                tasks.Add((
+                    "Schedule and Post Carousel",
+                    "Review and approve pending drafts. Create publish jobs with schedule times. Post today's carousel.",
+                    "📅 Wednesday -- Schedule and Post\nEstimated time: 15-20 minutes\nPublish target: TODAY 12:00 PM\n\nDashboard: https://instawriterstorage.z13.web.core.windows.net/",
+                    20,
+                    today.AddHours(8),
+                    today.AddHours(8).AddMinutes(20),
+                    TaskPriority.High
+                ));
+                break;
+
+            case DayOfWeek.Thursday:
+                tasks.Add((
+                    "Post Reel",
+                    "Post one of the Reels from Tuesday's filming session. Add caption + hashtags. Spend 15 min engaging after posting.",
+                    "🎬 Thursday -- Post a Reel\nEstimated time: 5-10 minutes\nPublish target: NOW (12:00 PM)",
+                    10,
+                    today.AddHours(12),
+                    today.AddHours(12).AddMinutes(10),
+                    TaskPriority.High
+                ));
+                break;
+
+            case DayOfWeek.Friday:
+                tasks.Add((
+                    "Post Carousel",
+                    "Post this week's second carousel from approved drafts.",
+                    "",
+                    10,
+                    today.AddHours(12),
+                    today.AddHours(12).AddMinutes(10),
+                    TaskPriority.High
+                ));
+                tasks.Add((
+                    "Engagement Post",
+                    "Post an engagement-bait post: hot take, poll, question, or controversial opinion. Get people commenting.",
+                    "🔥 Friday -- Carousel + Engagement Post\nEstimated time: 15-20 minutes\nPublish target: 12:00 PM (carousel), 5:00 PM (engagement)",
+                    15,
+                    today.AddHours(17),
+                    today.AddHours(17).AddMinutes(15),
+                    TaskPriority.Medium
+                ));
+                break;
+
+            case DayOfWeek.Saturday:
+                tasks.Add((
+                    "Post Reel + Stories",
+                    "Post your 3rd Reel of the week. Post 3-5 casual Stories throughout the day: behind the scenes, weekend routine, something personal.",
+                    "📱 Saturday -- Reel + Stories Day\nEstimated time: 15-20 minutes\nPublish target: NOW 10:00 AM (reel)",
+                    20,
+                    today.AddHours(10),
+                    today.AddHours(10).AddMinutes(20),
+                    TaskPriority.Medium
+                ));
+                break;
+
+            case DayOfWeek.Sunday:
+                tasks.Add((
+                    "Weekly Analytics Review",
+                    "Check Instagram Insights: which posts got saves/shares, follower growth, best posting times. Plan next week's content topics. Feed winners into Monday's content ideas.",
+                    "📊 Sunday -- Weekly Analytics Review\nEstimated time: 20-30 minutes\nNo publish today -- rest and plan\n\nDashboard: https://instawriterstorage.z13.web.core.windows.net/",
+                    30,
+                    today.AddHours(10),
+                    today.AddHours(10).AddMinutes(30),
+                    TaskPriority.Medium
+                ));
+                break;
+        }
+
+        // Create tasks and calendar events in the database
+        foreach (var (title, description, message, durationMin, start, end, priority) in tasks)
+        {
+            var task = new TaskItem
+            {
+                Id = Guid.NewGuid(),
+                TaskType = "ContentReminder",
+                Owner = "system",
+                Description = $"{title}: {description}",
+                DueDate = end,
+                Priority = priority,
+                Status = TaskItemStatus.Pending,
+                CreatedAt = DateTime.UtcNow
+            };
+            db.TaskItems.Add(task);
+
+            var calEvent = new CalendarEvent
+            {
+                Id = Guid.NewGuid(),
+                TaskItemId = task.Id,
+                StartDateTime = start,
+                EndDateTime = end,
+                ReminderProfile = $"{durationMin} min",
+                CreatedAt = DateTime.UtcNow
+            };
+            db.CalendarEvents.Add(calEvent);
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        // Send the day's main Telegram message
+        var mainMessages = tasks.Where(t => !string.IsNullOrEmpty(t.message)).Select(t => t.message);
+        foreach (var msg in mainMessages)
+        {
+            await telegram.SendAsync(msg);
+        }
+
+        _logger.LogInformation("Created {Count} tasks and calendar events for {Day}", tasks.Count, day);
     }
 }
