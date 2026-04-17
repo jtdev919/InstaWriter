@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
-import type { ContentDraft } from "../types";
+import type { Asset, ContentDraft } from "../types";
 
 const KEY = ["content-drafts"];
+const ASSET_KEY = ["carousel-assets"];
 
 export function useContentDrafts() {
   return useQuery({ queryKey: KEY, queryFn: () => api.get<ContentDraft[]>("/content/drafts") });
@@ -39,5 +40,27 @@ export function useDeleteContentDraft() {
   return useMutation({
     mutationFn: (id: string) => api.del(`/content/drafts/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
+export function useRenderCarousel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (draftId: string) =>
+      api.post<{ draftId: string; slideCount: number; assetIds: string[]; assetUrls: string[] }>(
+        `/content/drafts/${draftId}/render-carousel`
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      qc.invalidateQueries({ queryKey: ASSET_KEY });
+    },
+  });
+}
+
+export function useCarouselAssets(draftId: string | null) {
+  return useQuery({
+    queryKey: [...ASSET_KEY, draftId],
+    queryFn: () => api.get<Asset[]>(`/content/drafts/${draftId}/carousel-assets`),
+    enabled: !!draftId,
   });
 }
