@@ -68,4 +68,5 @@ frontend/dist/
 
 ## Secrets
 .env
+*.env.production
 tools/render-carousel/.env
