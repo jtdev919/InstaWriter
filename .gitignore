@@ -65,3 +65,7 @@ appsettings.*.local.json
 ## Frontend
 frontend/node_modules/
 frontend/dist/
+
+## Secrets
+.env
+tools/render-carousel/.env

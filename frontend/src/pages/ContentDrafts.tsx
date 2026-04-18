@@ -3,7 +3,7 @@ import { useContentDrafts, useCreateContentDraft, useTransitionContentDraft, use
 import { useContentIdeas } from "../hooks/use-content-ideas";
 import StatusBadge from "../components/ui/StatusBadge";
 import { DRAFT_TRANSITIONS, type ContentDraftStatus, type ContentDraft } from "../types";
-import { Plus, Trash2, Eye, X, Save, PlusCircle, Minus, Copy, Sparkles } from "lucide-react";
+import { Plus, Trash2, Eye, X, Save, PlusCircle, Minus, Copy, Sparkles, Download } from "lucide-react";
 
 interface SlideContent {
   type: "title" | "content" | "cta-bridge" | "cta";
@@ -180,11 +180,33 @@ function CarouselEditor({ draft, onClose }: { draft: ContentDraft; onClose: () =
     });
   };
 
+  const handleExport = () => {
+    const defaultName = (draft.coverText || draft.id).replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-").toLowerCase();
+    const input = prompt("File name for export:", `${defaultName}-slides`);
+    if (!input) return;
+    const safeName = input.replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-");
+    const json = JSON.stringify(slides, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safeName}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Carousel Editor</h2>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            title="Download slides as JSON for rendering PNGs"
+          >
+            <Download size={12} /> Export JSON
+          </button>
           <button
             onClick={handleSave}
             disabled={updateDraft.isPending}
@@ -329,6 +351,7 @@ function CarouselEditor({ draft, onClose }: { draft: ContentDraft; onClose: () =
 
       <p className="text-xs text-gray-400 mt-3">
         Click a slide to edit it. Changes preview live. Click "Save Slides" to store your edits.
+        <br />To render final PNGs: click "Export JSON", then run: <code className="bg-gray-100 px-1 rounded text-[10px]">node render-draft.js --file slides.json</code>
       </p>
     </div>
   );
